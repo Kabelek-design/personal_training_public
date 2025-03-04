@@ -1,0 +1,23 @@
+Witajcie!
+testuje swoje możliwości tworzenia apki flutter z użyciem fastApi, docker, mySQL dla celów osobistych cdn.
+
+Personal Training App
+O Projekcie
+Cel: rejestrowanie i wyświetlanie postępów treningowych (w bojach: Bench Press, Squats, Deadlift, wraz z ich One Rep Max oraz sets "+").
+Front-end: Flutter (obsługa interfejsu, wyświetlanie danych).
+Back-end: FastAPI (w Pythonie) z bazą mySQL (w Dockerze lub lokalnie).
+
+Docker: 
+
+docker compose down -v
+docker compose build --no-cache
+docker compose up
+setup startup.sh LF for Windows
+
+Migracja alembic tworzenie
+
+alembic revision --autogenerate -m "Add or update models"
+
+Build dla wersji na telefon:
+
+flutter build apk --release
