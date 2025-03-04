@@ -1,23 +1,58 @@
-Witajcie!
-testuje swoje możliwości tworzenia apki flutter z użyciem fastApi, docker, mySQL dla celów osobistych cdn.
+# Personal Training App
 
-Personal Training App
-O Projekcie
-Cel: rejestrowanie i wyświetlanie postępów treningowych (w bojach: Bench Press, Squats, Deadlift, wraz z ich One Rep Max oraz sets "+").
-Front-end: Flutter (obsługa interfejsu, wyświetlanie danych).
-Back-end: FastAPI (w Pythonie) z bazą mySQL (w Dockerze lub lokalnie).
+## Features
+- User registration and authentication
+- Training plan selection (Plan A & Plan B with different set/rep schemes)
+- Workout progress tracking (Bench Press, Squats, Deadlift)
+- One Rep Max (1RM) calculation
+- AMRAP (As Many Reps As Possible) tracking
+- Unified UI color scheme
 
-Docker: 
+## Tech Stack
+- **Frontend:** Flutter (Dart)
+- **Backend:** FastAPI (Python)
+- **Database:** MySQL (via Docker or local installation)
+- **Containerization:** Docker + Docker Compose
 
-docker compose down -v
-docker compose build --no-cache
-docker compose up
-setup startup.sh LF for Windows
+## Run with Docker
 
-Migracja alembic tworzenie
+```bash
+docker compose down -v  # Stop and remove volumes (optional)
+docker compose build --no-cache  # Build fresh containers
+docker compose up  # Start the app
+```
 
+## Database Migrations (Alembic - FastAPI ORM)
+
+If you modify models, generate and apply new migration files:
+
+```bash
 alembic revision --autogenerate -m "Add or update models"
+alembic upgrade head  # Apply migrations
+```
 
-Build dla wersji na telefon:
+## Build the Mobile App (Flutter)
 
+For Android:
+```bash
 flutter build apk --release
+```
+
+For iOS (requires macOS):
+```bash
+flutter build ios --release
+```
+
+## Roadmap
+
+- Workout history & analytics
+- Cloud sync for progress tracking
+- Social features (progress sharing, challenges)
+
+## Contributing
+
+Fork the repository and submit a pull request.
+
+## Contact
+
+https://github.com/Kabelek-design or mikekabelek@gmail.com
