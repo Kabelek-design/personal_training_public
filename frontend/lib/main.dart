@@ -24,8 +24,8 @@ void main() async {
 
   final bool isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
   final int? currentUserId = prefs.getInt('currentUserId');
-     // Usuń lub zakomentuj, jeśli nie jest potrzebne w testach
-    // await prefs.clear();
+  // Usuń lub zakomentuj, jeśli nie jest potrzebne w testach
+  // await prefs.clear();
   runApp(MyApp(isFirstLaunch: isFirstLaunch, initialUserId: currentUserId));
 }
 
@@ -54,9 +54,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Trening & Dieta',
+      title: 'Trening & Dieta', // Polski tytuł z poprawnymi znakami
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        fontFamily: 'Roboto', // Czcionka obsługująca polskie znaki
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(
+              fontFamily: 'Roboto'), // Upewnij się, że tekst używa Roboto
+        ),
       ),
       home: isFirstLaunch || initialUserId == null
           ? const OnboardingScreen()
@@ -76,7 +81,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  late List<Widget> _pages; // Używamy `late`, bo będzie zainicjalizowana w initState
+  late List<Widget>
+      _pages; // Używamy `late`, bo będzie zainicjalizowana w initState
   int? _currentUserId; // Przechowujemy aktualne ID użytkownika
 
   @override
@@ -99,7 +105,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadUserIdAndUpdatePages() async {
     if (_currentUserId == null) {
-      print('Błąd: currentUserId nie znaleziono w SharedPreferences – użytkownik musi się zarejestrować.');
+      print(
+          'Błąd: currentUserId nie znaleziono w SharedPreferences – użytkownik musi się zarejestrować.');
       _navigateToOnboarding();
       return;
     }
@@ -125,7 +132,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _selectedIndex = index;
       });
     } else {
-      print('Błąd: Nieprawidłowy indeks $index dla listy o długości ${_pages.length}');
+      print(
+          'Błąd: Nieprawidłowy indeks $index dla listy o długości ${_pages.length}');
     }
   }
 
@@ -133,7 +141,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        body: _pages.isNotEmpty ? _pages[_selectedIndex] : const Center(child: CircularProgressIndicator()),
+        body: _pages.isNotEmpty
+            ? _pages[_selectedIndex]
+            : const Center(child: CircularProgressIndicator()),
         bottomNavigationBar: Container(
           height: 60,
           decoration: BoxDecoration(

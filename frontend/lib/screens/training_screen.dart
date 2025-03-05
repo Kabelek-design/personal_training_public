@@ -50,19 +50,16 @@ class _TrainingScreenState extends State<TrainingScreen> {
       if (currentUserId == null) {
         _errorMessage = 'Brak użytkownika. Utwórz konto.';
         _isLoading = false;
-
         return; // Zatrzymaj dalsze przetwarzanie, jeśli brak użytkownika
       }
       selectedWeek = prefs.getInt('selectedWeek') ?? 1;
       planVersion = prefs.getString('planVersion'); // Pobierz plan_version, może być null
       if (planVersion == null) {
         planVersion = "A"; // Domyślny plan, jeśli nie znaleziono
-
       }
       final completedIds = prefs.getStringList('completedSetIds') ?? [];
       _completedSetIds.clear(); // Wyczyść istniejące ID przed wczytaniem
       _completedSetIds.addAll(completedIds.map((id) => int.parse(id))); // Wczytaj zapisane ID ukończonych serii dla wszystkich tygodni
-
 
       // Wczytaj zapisane wartości AMRAP dla każdego seta
       amrapControllers.clear(); // Wyczyść istniejące kontrolery
@@ -80,7 +77,6 @@ class _TrainingScreenState extends State<TrainingScreen> {
     await prefs.setString('planVersion', planVersion ?? "A");
     await prefs.setStringList('completedSetIds', _completedSetIds.map((id) => id.toString()).toList());
 
-
     // Zapisz aktualne wartości AMRAP dla każdego kontrolera, jeśli set jest ukończony
     for (var entry in amrapControllers.entries) {
       final setId = entry.key;
@@ -88,7 +84,6 @@ class _TrainingScreenState extends State<TrainingScreen> {
       if (_completedSetIds.contains(setId) && controller.text.isNotEmpty) {
         final reps = int.tryParse(controller.text) ?? 0;
         await prefs.setInt('amrapReps_$setId', reps);
-
       }
     }
 
@@ -162,7 +157,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
       }
 
       // Synchronizuj _completedSetIds z danymi z API i SharedPreferences dla wszystkich tygodni
-      final currentSetIds = plan.expand((training) => training.sets).map((set) => set.id).toSet();
+      plan.expand((training) => training.sets).map((set) => set.id).toSet();
       final savedCompletedIds = prefs.getStringList('completedSetIds') ?? [];
 
       // Zachowaj wszystkie zapisane ID ukończonych serii, jeśli istnieją w którymkolwiek z planów
@@ -177,11 +172,13 @@ class _TrainingScreenState extends State<TrainingScreen> {
       // Usuń tylko te ID, które nie istnieją w żadnym planie dla wszystkich tygodni
       _completedSetIds.removeWhere((setId) => !allPlans.values.any((plans) => plans.any((training) => training.sets.any((s) => s.id == setId))));
 
+      // Sprawdź, czy one_rep_max zostało zmienione dla wszystkich głównych ćwiczeń w tygodniu 6
+      bool allMainExercisesUpdatedInWeek6 = await _areAllMainExercisesUpdatedInWeek6();
+
       setState(() {
         _exercisesMap = exercisesMap;
         _currentPlan = plan;
         _isLoading = false;
-       
       });
 
       await _savePreferences();
@@ -189,7 +186,6 @@ class _TrainingScreenState extends State<TrainingScreen> {
       setState(() {
         _errorMessage = 'Błąd ładowania danych: $e';
         _isLoading = false;
-
       });
     }
   }
@@ -209,8 +205,6 @@ class _TrainingScreenState extends State<TrainingScreen> {
           );
 
       final requiredReps = _getRequiredReps(trainingSet.reps);
-
-    
 
       // Zawsze oznacz serię jako ukończoną, ale stosuj progresję tylko, jeśli liczba powtórzeń jest >= wymaganej
       setState(() {
@@ -551,6 +545,33 @@ class _TrainingScreenState extends State<TrainingScreen> {
                                           : null,
                                     );
                                   }).toList(),
+                                  // Zachowaj istniejący przycisk resetu dla pojedynczego ćwiczenia (jeśli potrzebne)
+                                  FutureBuilder<bool>(
+                                    future: _isOneRepMaxChanged(training.exerciseId),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.connectionState == ConnectionState.waiting) {
+                                        return const SizedBox.shrink();
+                                      }
+                                      if (snapshot.hasData && snapshot.data == true) {
+                                        return Padding(
+                                          padding: const EdgeInsets.all(12.0),
+                                          child: ElevatedButton.icon(
+                                            onPressed: () => _resetTrainingForExercise(training.exerciseId),
+                                            icon: const Icon(Icons.refresh),
+                                            label: const Text("Zresetuj trening"),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.red,
+                                              foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                      return const SizedBox.shrink();
+                                    },
+                                  ),
                                   if (selectedWeek == 5 || selectedWeek == 6)
                                     Padding(
                                       padding: const EdgeInsets.all(12.0),
@@ -568,9 +589,120 @@ class _TrainingScreenState extends State<TrainingScreen> {
                           },
                         ),
                       ),
+                      // Dodaj przycisk "Zresetuj cały plan treningowy" pod wszystkimi kartami, jeśli allMainExercisesUpdatedInWeek6 jest true
+                      if (selectedWeek == 6)
+                        FutureBuilder<bool>(
+                          future: _areAllMainExercisesUpdatedInWeek6(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const SizedBox.shrink();
+                            }
+                            if (snapshot.hasData && snapshot.data == true) {
+                              return Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: ElevatedButton.icon(
+                                  onPressed: _resetEntireTrainingPlan,
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text("Zresetuj cały plan treningowy"),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                  ),
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
                     ],
                   ),
       ),
+    );
+  }
+
+  // Nowa metoda do sprawdzania, czy one_rep_max zostało zmienione dla wszystkich głównych ćwiczeń w tygodniu 6
+  Future<bool> _areAllMainExercisesUpdatedInWeek6() async {
+    final prefs = await SharedPreferences.getInstance();
+    final mainExercises = {"squats", "dead_lift", "bench_press"};
+    bool allUpdated = true;
+
+    final exercises = await _apiService.fetchExercises(userId: currentUserId!);
+    final week6Plan = await _apiService.fetchTrainingPlan(currentUserId!, 6, planVersion ?? "A");
+
+    for (var exercise in exercises) {
+      if (mainExercises.contains(exercise.name)) {
+        if (!(prefs.getBool('oneRepMaxChanged_${exercise.id}') ?? false)) {
+          allUpdated = false;
+          break;
+        }
+      }
+    }
+
+    return allUpdated && selectedWeek == 6;
+  }
+
+  // Nowa metoda do resetowania całego planu treningowego
+  Future<void> _resetEntireTrainingPlan() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Resetuj wszystkie serie dla wszystkich tygodni
+    setState(() {
+      _completedSetIds.clear();
+      amrapControllers.forEach((setId, controller) => controller.clear());
+    });
+
+    // Wyczyść flagi zmian one_rep_max dla wszystkich ćwiczeń
+    final exercises = await _apiService.fetchExercises(userId: currentUserId!);
+    for (var exercise in exercises) {
+      await prefs.setBool('oneRepMaxChanged_${exercise.id}', false);
+    }
+    await prefs.setBool('oneRepMaxChanged', false);
+
+    // Zapisz zmiany w SharedPreferences
+    await _savePreferences();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Cały plan treningowy zresetowany!')),
+    );
+
+    // Przeładuj dane, aby zaktualizować UI
+    await _loadData();
+  }
+
+  // Nowa metoda do sprawdzania, czy one_rep_max zostało zmienione dla ćwiczenia
+  Future<bool> _isOneRepMaxChanged(int exerciseId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('oneRepMaxChanged_${exerciseId}') ?? false;
+  }
+
+  // Nowa metoda do resetowania treningu dla konkretnego ćwiczenia
+  Future<void> _resetTrainingForExercise(int exerciseId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final training = _currentPlan.firstWhere((t) => t.exerciseId == exerciseId);
+
+    // Resetuj wszystkie serie dla tego ćwiczenia w aktualnym tygodniu
+    setState(() {
+      for (var set in training.sets) {
+        _completedSetIds.remove(set.id);
+        final controller = amrapControllers[set.id];
+        if (controller != null) {
+          controller.clear(); // Wyczyść pole AMRAP
+        }
+      }
+    });
+
+    // Wyczyść flagę zmiany one_rep_max dla tego ćwiczenia
+    await prefs.setBool('oneRepMaxChanged_${exerciseId}', false);
+
+    // Zapisz zmiany w SharedPreferences
+    await _savePreferences();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Trening zresetowany dla tego ćwiczenia!')),
     );
   }
 }

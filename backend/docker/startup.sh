@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Czekamy na dostępność bazy danych MySQL (zastąp 'db' nazwą serwisu bazy z `docker-compose.yml`)
-dockerize -wait tcp://db:3306 -timeout 20s  
+# dockerize -wait tcp://db:3306 -timeout 20s  
 
 # Jeśli używasz Alembic do migracji, to wykonujemy je
 alembic upgrade head

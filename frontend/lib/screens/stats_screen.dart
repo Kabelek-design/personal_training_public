@@ -38,7 +38,6 @@ class _StatsScreenState extends State<StatsScreen> {
     if (loadedUserId == null) {
       loadedUserId = 1;
       await prefs.setInt('currentUserId', loadedUserId);
-      print('Ostrzeżenie: currentUserId nie znaleziono, ustawiono na 1');
     }
     setState(() {
       currentUserId = loadedUserId;
@@ -82,102 +81,99 @@ class _StatsScreenState extends State<StatsScreen> {
   }
 
   Future<void> _editOneRepMax(Exercise exercise) async {
-    final TextEditingController controller =
-        TextEditingController(text: exercise.oneRepMax.toString());
+  final TextEditingController controller =
+      TextEditingController(text: exercise.oneRepMax.toString());
 
-    bool? confirm = await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          title: const Text('Nowy 1RM'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "Zmiana wartości 1RM spowoduje wyczyszczenie progresji. Czy na pewno chcesz kontynuować?",
-                style:
-                    TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Nowy 1RM (kg)',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    Colors.deepPurple.shade600, 
-                foregroundColor: Colors.white, 
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text('Zatwierdź'),
+  bool? confirm = await showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text('Nowy 1RM'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Zmiana wartości 1RM spowoduje wyczyszczenie progresji. Czy na pewno chcesz kontynuować?",
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
             ),
-                      OutlinedButton(
-              onPressed: () => Navigator.pop(context, false),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(
-                    color: Colors.deepPurple.shade600,
-                    width: 2), // Border fioletowy
-                foregroundColor: Colors.deepPurple.shade600, 
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Nowy 1RM (kg)',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.white,
               ),
-              child: const Text('Anuluj'),
             ),
           ],
-        );
-      },
-    );
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepPurple.shade600,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Zatwierdź'),
+          ),
+          OutlinedButton(
+            onPressed: () => Navigator.pop(context, false),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(
+                  color: Colors.deepPurple.shade600, width: 2), // Border fioletowy
+              foregroundColor: Colors.deepPurple.shade600,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Anuluj'),
+          ),
+        ],
+      );
+    },
+  );
 
-    if (confirm == true) {
-      double? newOneRepMax = double.tryParse(controller.text);
-      if (newOneRepMax == null || newOneRepMax <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Niepoprawna wartość 1RM!')),
-        );
-        return;
-      }
+  if (confirm == true) {
+    double? newOneRepMax = double.tryParse(controller.text);
+    if (newOneRepMax == null || newOneRepMax <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Niepoprawna wartość 1RM!')),
+      );
+      return;
+    }
 
-      try {
-        String apiName = nameMappingStats.entries
-            .firstWhere((entry) => entry.value == exercise.name,
-                orElse: () => MapEntry(exercise.name, exercise.name))
-            .key;
-        await _apiService.updateExercise(
-          currentUserId!,
-          exercise.id,
-          newOneRepMax,
-          apiName,
-        );
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('oneRepMaxChanged', true);
-        await prefs.setInt('changedExerciseId', exercise.id);
+    try {
+      String apiName = nameMappingStats.entries
+          .firstWhere((entry) => entry.value == exercise.name,
+              orElse: () => MapEntry(exercise.name, exercise.name))
+          .key;
+      await _apiService.updateExercise(
+        currentUserId!,
+        exercise.id,
+        newOneRepMax,
+        apiName,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('oneRepMaxChanged_${exercise.id}', true); // Zapis informacji o zmianie 1RM dla konkretnego ćwiczenia
+      await prefs.setBool('oneRepMaxChanged', true); // Globalna flaga dla wszystkich ćwiczeń
+      await prefs.setInt('changedExerciseId', exercise.id);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('1RM zaktualizowane!')),
-        );
-        _loadExercises();
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Błąd aktualizacji: $e')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('1RM zaktualizowane!')),
+      );
+      _loadExercises();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Błąd aktualizacji: $e')),
+      );
     }
   }
+}
 
   Future<void> _addExercise() async {
     final TextEditingController nameController = TextEditingController();
@@ -187,8 +183,7 @@ class _StatsScreenState extends State<StatsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: const Text('Dodaj nowe ćwiczenie'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -219,9 +214,8 @@ class _StatsScreenState extends State<StatsScreen> {
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    Colors.deepPurple.shade600, 
-                foregroundColor: Colors.white, 
+                backgroundColor: Colors.deepPurple.shade600,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
               ),
@@ -231,9 +225,8 @@ class _StatsScreenState extends State<StatsScreen> {
               onPressed: () => Navigator.pop(context, false),
               style: OutlinedButton.styleFrom(
                 side: BorderSide(
-                    color: Colors.deepPurple.shade600,
-                    width: 2), // Border fioletowy
-                foregroundColor: Colors.deepPurple.shade600, 
+                    color: Colors.deepPurple.shade600, width: 2), // Border fioletowy
+                foregroundColor: Colors.deepPurple.shade600,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -319,14 +312,12 @@ class _StatsScreenState extends State<StatsScreen> {
         ),
         cardTheme: CardTheme(
           elevation: 4,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           ),
         ),
@@ -369,8 +360,7 @@ class _StatsScreenState extends State<StatsScreen> {
                     padding: const EdgeInsets.only(right: 16.0),
                     child: ElevatedButton.icon(
                       onPressed: _addExercise,
-                      icon:
-                          const Icon(Icons.add, size: 18, color: Colors.white),
+                      icon: const Icon(Icons.add, size: 18, color: Colors.white),
                       label: const Text('Nowe ćwiczenie'),
                       style: ElevatedButton.styleFrom(
                         shape: RoundedRectangleBorder(
@@ -379,24 +369,20 @@ class _StatsScreenState extends State<StatsScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         elevation: 0,
-                      )
-                          .copyWith(
-                            backgroundColor:
-                                WidgetStateProperty.resolveWith<Color>(
-                              (states) {
-                                if (states.contains(WidgetState.pressed)) {
-                                  return Colors.deepPurple.shade600;
-                                }
-                                return Colors.transparent;
-                              },
-                            ),
-                            overlayColor: WidgetStateProperty.all(
-                                Colors.deepPurple.withOpacity(0.1)),
-                          )
-                          .copyWith(
-                            foregroundColor:
-                                WidgetStateProperty.all(Colors.white),
-                          ),
+                      ).copyWith(
+                        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                          (states) {
+                            if (states.contains(WidgetState.pressed)) {
+                              return Colors.deepPurple.shade600;
+                            }
+                            return Colors.transparent;
+                          },
+                        ),
+                        overlayColor:
+                            WidgetStateProperty.all(Colors.deepPurple.withOpacity(0.1)),
+                      ).copyWith(
+                        foregroundColor: WidgetStateProperty.all(Colors.white),
+                      ),
                     ),
                   ),
                 ],
@@ -418,24 +404,27 @@ class _StatsScreenState extends State<StatsScreen> {
                     children: [
                       ...basicExercises
                           .map((exercise) => Card(
-                                child: ListTile(
-                                  title: Text(
-                                    exercise.name,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                                child: InkWell(
+                                  onTap: () => _editOneRepMax(exercise), // Cała karta klikalna do edycji
+                                  child: ListTile(
+                                    title: Text(
+                                      exercise.name,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                  subtitle: Text(
-                                    '1RM: ${exercise.oneRepMax} kg (+${exercise.progressWeight} kg progresji)',
-                                    style: TextStyle(
-                                      color: Theme.of(context).primaryColor,
+                                    subtitle: Text(
+                                      '1RM: ${exercise.oneRepMax} kg (+${exercise.progressWeight} kg progresji)',
+                                      style: TextStyle(
+                                        color: Theme.of(context).primaryColor,
+                                      ),
                                     ),
-                                  ),
-                                  trailing: IconButton(
-                                    icon: const Icon(Icons.edit,
-                                        color: Colors.deepPurple),
-                                    onPressed: () => _editOneRepMax(exercise),
+                                    trailing: IconButton(
+                                      icon: const Icon(Icons.edit,
+                                          color: Colors.deepPurple),
+                                      onPressed: () => _editOneRepMax(exercise), // Zachowaj ikonkę do edycji
+                                    ),
                                   ),
                                 ),
                               ))
@@ -450,36 +439,37 @@ class _StatsScreenState extends State<StatsScreen> {
                         ),
                       ...additionalExercises
                           .map((exercise) => Card(
-                                child: ListTile(
-                                  title: Text(
-                                    exercise.name,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  subtitle: Text(
-                                    '1RM: ${exercise.oneRepMax} kg (+${exercise.progressWeight} kg progresji)',
-                                    style: TextStyle(
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.edit,
-                                            color: Colors.blue),
-                                        onPressed: () =>
-                                            _editOneRepMax(exercise),
+                                child: InkWell(
+                                  onTap: () => _editOneRepMax(exercise), // Cała karta klikalna do edycji
+                                  child: ListTile(
+                                    title: Text(
+                                      exercise.name,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete,
-                                            color: Colors.red),
-                                        onPressed: () =>
-                                            _deleteExercise(exercise),
+                                    ),
+                                    subtitle: Text(
+                                      '1RM: ${exercise.oneRepMax} kg (+${exercise.progressWeight} kg progresji)',
+                                      style: TextStyle(
+                                        color: Theme.of(context).primaryColor,
                                       ),
-                                    ],
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.edit,
+                                              color: Colors.deepPurple), // Zmiana koloru na Colors.deepPurple
+                                          onPressed: () => _editOneRepMax(exercise),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete,
+                                              color: Colors.red),
+                                          onPressed: () => _deleteExercise(exercise),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ))

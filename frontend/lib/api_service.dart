@@ -12,9 +12,17 @@ class ApiService {
       String endpoint = userId != null
           ? "users/$userId/$exercisesEndpoint"
           : exercisesEndpoint;
-      final response = await http.get(Uri.parse('$baseUrl/$endpoint'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/$endpoint'),
+        headers: {
+          'Content-Type':
+              'application/json; charset=utf-8', 
+          'Accept':
+              'application/json; charset=utf-8', 
+        },
+      );
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
+        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
         return data.map((json) => Exercise.fromJson(json)).toList();
       } else {
         throw Exception(
@@ -45,17 +53,20 @@ class ApiService {
   /// **Pobranie planu treningowego na dany tydzień z wersją planu**
   Future<List<TrainingPlan>> fetchTrainingPlan(
       int userId, int weekNumber, String planVersion) async {
-    print(
-        'Pobieranie planu dla userId: $userId, week: $weekNumber, planVersion: $planVersion');
     final response = await http.get(
       Uri.parse(
           '$baseUrl/users/$userId/plan/week/$weekNumber?plan_version=$planVersion'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type':
+            'application/json; charset=utf-8', 
+        'Accept':
+            'application/json; charset=utf-8', 
+      },
     );
 
     if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      print('Odpowiedź z fetchTrainingPlan: $data');
+      
+      final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
       return data.map((json) => TrainingPlan.fromJson(json)).toList();
     } else {
       throw Exception(
@@ -72,7 +83,10 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/users/$userId/plan/week/$weekNumber/amrap'),
-      headers: {"Content-Type": "application/json"},
+      headers: {
+        "Content-Type":
+            "application/json; charset=utf-8", 
+      },
       body: jsonEncode({
         "set_id": setId,
         "reps_performed": actualReps,
@@ -86,16 +100,20 @@ class ApiService {
   }
 
   Future<void> addExercise(int userId, String name, double oneRepMax) async {
+   
     final response = await http.post(
       Uri.parse('$baseUrl/users/$userId/$exercisesEndpoint'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type':
+            'application/json; charset=utf-8', 
+      },
       body: json.encode([
         {'name': name, 'one_rep_max': oneRepMax}
       ]),
     );
     if (response.statusCode != 200) {
       throw Exception(
-          'Failed to add exercise: ${response.statusCode} - ${response.body}');
+          'Nie udało się dodać ćwiczenia: ${response.statusCode} - ${response.body}');
     }
   }
 
@@ -103,23 +121,28 @@ class ApiService {
   Future<void> deleteExercise(int userId, int exerciseId) async {
     final response = await http.delete(
       Uri.parse('$baseUrl/users/$userId/$exercisesEndpoint/$exerciseId'),
-      headers: {"Content-Type": "application/json"},
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+      },
     );
-
-    if (response.statusCode == 403) {
-      throw Exception('Nie można usunąć tego ćwiczenia - jest chronione.');
-    } else if (response.statusCode != 200) {
+    if (response.statusCode != 200) {
       throw Exception(
-          'Usuwanie ćwiczenia nie powiodło się: ${response.statusCode} - ${response.body}');
+          'Nie udało się usunąć ćwiczenia: ${response.statusCode} - ${response.body}');
     }
   }
 
   /// **Pobranie listy użytkowników**
   Future<List<User>> fetchUsers() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/$usersEndpoint'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/$usersEndpoint'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json; charset=utf-8',
+        },
+      );
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
+        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
         return data.map((json) => User.fromJson(json)).toList();
       } else {
         throw Exception(
@@ -135,9 +158,13 @@ class ApiService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/$usersEndpoint${userId.toString()}'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json; charset=utf-8',
+        },
       );
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
         return User.fromJson(data);
       } else if (response.statusCode == 404) {
         throw Exception('Użytkownik nie znaleziony');
@@ -161,7 +188,9 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/$usersEndpoint?plan_version=$planVersion'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+      },
       body: jsonEncode({
         'nickname': nickname,
         'age': age,
@@ -169,12 +198,12 @@ class ApiService {
         'weight': weight,
         'gender': gender,
         'plan_version': planVersion,
-        'weight_goal' : weightGoal,
+        'weight_goal': weightGoal,
       }),
     );
 
     if (response.statusCode == 200) {
-      return User.fromJson(jsonDecode(response.body));
+      return User.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
     } else {
       throw Exception(
           'Nie udało się utworzyć użytkownika: ${response.statusCode}');
@@ -194,7 +223,7 @@ class ApiService {
     try {
       final response = await http.patch(
         Uri.parse('$baseUrl/$usersEndpoint${userId.toString()}'),
-        headers: {"Content-Type": "application/json"},
+        headers: {"Content-Type": "application/json; charset=utf-8"},
         body: jsonEncode({
           if (nickname != null) "nickname": nickname,
           if (age != null) "age": age,
@@ -207,12 +236,12 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
         return User.fromJson(data);
       } else if (response.statusCode == 404) {
         throw Exception('Użytkownik nie znaleziony');
       } else if (response.statusCode == 400) {
-        final error = jsonDecode(response.body)['detail'];
+        final error = jsonDecode(utf8.decode(response.bodyBytes))['detail'];
         throw Exception('Błąd aktualizacji użytkownika: $error');
       } else {
         throw Exception(
@@ -228,7 +257,7 @@ class ApiService {
     try {
       final response = await http.delete(
         Uri.parse('$baseUrl/$usersEndpoint/${userId.toString()}'),
-        headers: {"Content-Type": "application/json"},
+        headers: {"Content-Type": "application/json; charset=utf-8"},
       );
 
       if (response.statusCode == 200) {
@@ -248,9 +277,13 @@ class ApiService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/$usersEndpoint${userId.toString()}/weight_history'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json; charset=utf-8',
+        },
       );
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
+        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
         return data.map((json) => WeightHistory.fromJson(json)).toList();
       } else if (response.statusCode == 404) {
         throw Exception(
@@ -278,8 +311,8 @@ class ApiService {
     final response = await http.post(
       uri,
       headers: {
-        'Content-Type': 'application/json',
-        'accept': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
+        'accept': 'application/json; charset=utf-8',
       },
       body: null,
     );
