@@ -172,6 +172,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
       // Usuń tylko te ID, które nie istnieją w żadnym planie dla wszystkich tygodni
       _completedSetIds.removeWhere((setId) => !allPlans.values.any((plans) => plans.any((training) => training.sets.any((s) => s.id == setId))));
 
+      // Sprawdź, czy one_rep_max zostało zmienione dla wszystkich głównych ćwiczeń w tygodniu 6
+
       setState(() {
         _exercisesMap = exercisesMap;
         _currentPlan = plan;
@@ -628,6 +630,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
     bool allUpdated = true;
 
     final exercises = await _apiService.fetchExercises(userId: currentUserId!);
+    final week6Plan = await _apiService.fetchTrainingPlan(currentUserId!, 6, planVersion ?? "A");
 
     for (var exercise in exercises) {
       if (mainExercises.contains(exercise.name)) {
