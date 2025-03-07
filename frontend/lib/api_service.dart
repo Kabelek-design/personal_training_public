@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:personal_training/models/training_model.dart';
+import 'package:personal_training/models/training_schedule.dart';
 import 'package:personal_training/models/user_model.dart';
 import 'package:personal_training/models/weight_history.dart';
 import 'constants.dart';
@@ -322,4 +323,283 @@ class ApiService {
           'Błąd zapisu pomiaru: ${response.statusCode} - ${response.body}');
     }
   }
+
+
+// Plan treningowy hyper
+
+
+Future<List<TrainingPlanSchedule>> getAllTrainingPlans(
+    int userId, {
+    DateTime? fromDate,
+    DateTime? toDate,
+  }) async {
+    try {
+      var uri = Uri.parse('$baseUrl/users/$userId/training-schedule/');
+      if (fromDate != null || toDate != null) {
+        final queryParams = <String, String>{};
+        if (fromDate != null) {
+          queryParams['from_date'] = fromDate.toIso8601String().substring(0, 10);
+        }
+        if (toDate != null) {
+          queryParams['to_date'] = toDate.toIso8601String().substring(0, 10);
+        }
+        uri = uri.replace(queryParameters: queryParams);
+      }
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json; charset=utf-8',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+        return data.map((json) => TrainingPlanSchedule.fromJson(json)).toList();
+      } else if (response.statusCode == 404) {
+        throw Exception('Nie znaleziono planów treningowych dla użytkownika $userId');
+      } else {
+        throw Exception(
+            'Błąd pobierania planów treningowych: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Wystąpił wyjątek: $e');
+    }
+  }
+
+  /// Pobieranie harmonogramu na konkretny dzień
+  Future<List<TrainingPlanSchedule>> getTrainingPlansForDay(int userId, DateTime dayDate) async {
+    try {
+      final formattedDate = dayDate.toIso8601String().substring(0, 10);
+      final response = await http.get(
+        Uri.parse('$baseUrl/users/$userId/training-schedule/day/$formattedDate'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json; charset=utf-8',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+        return data.map((json) => TrainingPlanSchedule.fromJson(json)).toList();
+      } else if (response.statusCode == 404) {
+        throw Exception('Nie znaleziono planów na dzień $formattedDate');
+      } else {
+        throw Exception(
+            'Błąd pobierania planów na dzień: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Wystąpił wyjątek: $e');
+    }
+  }
+
+  /// Pobieranie harmonogramu na bieżący tydzień
+  Future<List<TrainingPlanSchedule>> getTrainingPlansForCurrentWeek(int userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/users/$userId/training-schedule/current-week'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json; charset=utf-8',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+        return data.map((json) => TrainingPlanSchedule.fromJson(json)).toList();
+      } else if (response.statusCode == 404) {
+        throw Exception('Nie znaleziono planów na bieżący tydzień');
+      } else {
+        throw Exception(
+            'Błąd pobierania planów na tydzień: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Wystąpił wyjątek: $e');
+    }
+  }
+
+  /// Pobieranie konkretnego planu treningowego
+  Future<TrainingPlanSchedule> getTrainingPlan(int userId, int trainingPlanId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/users/$userId/training-schedule/$trainingPlanId'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json; charset=utf-8',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        return TrainingPlanSchedule.fromJson(data);
+      } else if (response.statusCode == 404) {
+        throw Exception('Plan treningowy $trainingPlanId nie znaleziony');
+      } else {
+        throw Exception(
+            'Błąd pobierania planu: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Wystąpił wyjątek: $e');
+    }
+  }
+
+  /// Tworzenie nowego planu treningowego
+  Future<TrainingPlanSchedule> createTrainingPlan(int userId, TrainingPlanSchedule plan) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/users/$userId/training-schedule/'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json; charset=utf-8',
+        },
+        body: jsonEncode(plan.toJson()..remove('id')..remove('created_at')), // ID i created_at nadaje backend
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        return TrainingPlanSchedule.fromJson(data);
+      } else if (response.statusCode == 404) {
+        throw Exception('Użytkownik $userId nie znaleziony');
+      } else if (response.statusCode == 400) {
+        throw Exception('Błąd danych: ${response.body}');
+      } else {
+        throw Exception(
+            'Nie udało się utworzyć planu: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Wystąpił wyjątek: $e');
+    }
+  }
+
+  /// Aktualizacja planu treningowego
+  Future<TrainingPlanSchedule> updateTrainingPlan(
+      int userId, int trainingPlanId, Map<String, dynamic> updateData) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/users/$userId/training-schedule/$trainingPlanId'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json; charset=utf-8',
+        },
+        body: jsonEncode(updateData),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        return TrainingPlanSchedule.fromJson(data);
+      } else if (response.statusCode == 404) {
+        throw Exception('Plan treningowy $trainingPlanId nie znaleziony');
+      } else {
+        throw Exception(
+            'Aktualizacja planu nie powiodła się: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Wystąpił wyjątek: $e');
+    }
+  }
+
+  /// Usuwanie planu treningowego
+  Future<void> deleteTrainingPlan(int userId, int trainingPlanId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/users/$userId/training-schedule/$trainingPlanId'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return;
+      } else if (response.statusCode == 404) {
+        throw Exception('Plan treningowy $trainingPlanId nie znaleziony');
+      } else {
+        throw Exception(
+            'Usunięcie planu nie powiodło się: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Wystąpił wyjątek: $e');
+    }
+  }
+
+  /// Dodawanie ćwiczenia do planu
+  Future<ExerciseSchedule> addExerciseToPlan(
+      int userId, int trainingPlanId, ExerciseSchedule exercise) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/users/$userId/training-schedule/$trainingPlanId/exercises'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json; charset=utf-8',
+        },
+        body: jsonEncode(exercise.toJson()..remove('id')), // ID nadaje backend
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        return ExerciseSchedule.fromJson(data);
+      } else if (response.statusCode == 404) {
+        throw Exception('Plan $trainingPlanId lub ćwiczenie nie znalezione');
+      } else {
+        throw Exception(
+            'Nie udało się dodać ćwiczenia: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Wystąpił wyjątek: $e');
+    }
+  }
+
+  /// Aktualizacja ćwiczenia w planie
+  Future<ExerciseSchedule> updateExerciseInPlan(
+      int userId, int trainingPlanId, int exerciseScheduleId, Map<String, dynamic> updateData) async {
+    try {
+      final response = await http.patch(
+        Uri.parse(
+            '$baseUrl/users/$userId/training-schedule/$trainingPlanId/exercises/$exerciseScheduleId'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json; charset=utf-8',
+        },
+        body: jsonEncode(updateData),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        return ExerciseSchedule.fromJson(data);
+      } else if (response.statusCode == 404) {
+        throw Exception('Ćwiczenie $exerciseScheduleId nie znalezione');
+      } else {
+        throw Exception(
+            'Aktualizacja ćwiczenia nie powiodła się: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Wystąpił wyjątek: $e');
+    }
+  }
+
+  /// Usuwanie ćwiczenia z planu
+  Future<void> deleteExerciseFromPlan(
+      int userId, int trainingPlanId, int exerciseScheduleId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse(
+            '$baseUrl/users/$userId/training-schedule/$trainingPlanId/exercises/$exerciseScheduleId'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return;
+      } else if (response.statusCode == 404) {
+        throw Exception('Ćwiczenie $exerciseScheduleId nie znalezione');
+      } else {
+        throw Exception(
+            'Usunięcie ćwiczenia nie powiodło się: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Wystąpił wyjątek: $e');
+    }
+  }
+
 }

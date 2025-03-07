@@ -25,6 +25,7 @@ from app.db import Base # noqa
 from app.models.user import User # noqa
 from app.models.one_rep_max import Exercise, Set, WeekPlan # noqa
 from app.models.weight_history import WeightHistory # noqa
+from app.models.training_schedule import TrainingPlanSchedule, ExerciseSchedule # noqa
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata

@@ -173,7 +173,6 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _completedSetIds.removeWhere((setId) => !allPlans.values.any((plans) => plans.any((training) => training.sets.any((s) => s.id == setId))));
 
       // Sprawdź, czy one_rep_max zostało zmienione dla wszystkich głównych ćwiczeń w tygodniu 6
-      bool allMainExercisesUpdatedInWeek6 = await _areAllMainExercisesUpdatedInWeek6();
 
       setState(() {
         _exercisesMap = exercisesMap;

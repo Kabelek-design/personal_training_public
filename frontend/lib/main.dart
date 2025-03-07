@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'screens/training_screen.dart';
-import 'screens/stats_screen.dart';
-import 'screens/profile.dart';
-import 'screens/onboarding_screen.dart';
+import 'package:personal_training/screens/training_schedule.dart';
+import 'package:personal_training/screens/training_screen.dart';
+import 'package:personal_training/screens/stats_screen.dart';
+import 'package:personal_training/screens/profile.dart';
+import 'package:personal_training/screens/onboarding_screen.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:flutter/foundation.dart'; // Dodane dla kDebugMode
 
 final FlutterLocalNotificationsPlugin notificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -19,9 +19,7 @@ void main() async {
       InitializationSettings(android: androidSettings);
   await notificationsPlugin.initialize(initSettings);
 
-  // Usunięto resetowanie SharedPreferences – dane są teraz zachowywane
   final prefs = await SharedPreferences.getInstance();
-
   final bool isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
   final int? currentUserId = prefs.getInt('currentUserId');
   // Usuń lub zakomentuj, jeśli nie jest potrzebne w testach
@@ -54,13 +52,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Trening & Dieta', // Polski tytuł z poprawnymi znakami
+      title: 'Trening & Dieta',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        fontFamily: 'Roboto', // Czcionka obsługująca polskie znaki
+        fontFamily: 'Roboto',
         textTheme: const TextTheme(
-          bodyMedium: TextStyle(
-              fontFamily: 'Roboto'), // Upewnij się, że tekst używa Roboto
+          bodyMedium: TextStyle(fontFamily: 'Roboto'),
         ),
       ),
       home: isFirstLaunch || initialUserId == null
@@ -81,39 +78,36 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  late List<Widget>
-      _pages; // Używamy `late`, bo będzie zainicjalizowana w initState
-  int? _currentUserId; // Przechowujemy aktualne ID użytkownika
+  late List<Widget> _pages;
+  int? _currentUserId;
 
   @override
   void initState() {
     super.initState();
-    _currentUserId = (widget.currentUserId ?? _loadUserIdFromPrefs()) as int?;
+    _currentUserId = widget.currentUserId;
     if (_currentUserId == null) {
-      // Jeśli currentUserId nie istnieje, przekieruj na OnboardingScreen
-      _navigateToOnboarding();
-      return;
+      _loadUserIdAndUpdatePages();
+    } else {
+      _initializePages();
     }
-    _loadUserIdAndUpdatePages(); // Inicjalizuj strony z poprawnym userId
-  }
-
-  // Metoda pomocnicza do pobierania currentUserId z SharedPreferences
-  Future<int?> _loadUserIdFromPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt('currentUserId');
   }
 
   Future<void> _loadUserIdAndUpdatePages() async {
+    final prefs = await SharedPreferences.getInstance();
+    _currentUserId = prefs.getInt('currentUserId');
     if (_currentUserId == null) {
-      print(
-          'Błąd: currentUserId nie znaleziono w SharedPreferences – użytkownik musi się zarejestrować.');
+      print('Błąd: currentUserId nie znaleziono – przekierowanie na onboarding.');
       _navigateToOnboarding();
       return;
     }
+    _initializePages();
+  }
 
+  void _initializePages() {
     setState(() {
       _pages = [
         TrainingScreen(currentUserId: _currentUserId),
+        TrainingScheduleScreen(currentUserId: _currentUserId!), // Dodane z currentUserId
         StatsScreen(currentUserId: _currentUserId),
         ProfileScreen(currentUserId: _currentUserId),
       ];
@@ -160,9 +154,10 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(Icons.fitness_center, "Trening", 0),
-              _buildNavItem(Icons.bar_chart, "Statystyki", 1),
-              _buildNavItem(Icons.person, "Profil", 2),
+              _buildNavItem(Icons.fitness_center, "Ruchy siłowe", 0),
+              _buildNavItem(Icons.calendar_today, "Plan Treningowy", 1), // Zmieniono ikonę
+              _buildNavItem(Icons.bar_chart, "Statystyki", 2),
+              _buildNavItem(Icons.person, "Profil", 3),
             ],
           ),
         ),
@@ -175,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: () => _onItemTapped(index),
       child: SizedBox(
-        width: MediaQuery.of(context).size.width / 3,
+        width: MediaQuery.of(context).size.width / 4, // Zmiana na 4 strony
         child: TweenAnimationBuilder(
           duration: const Duration(milliseconds: 300),
           tween: ColorTween(
