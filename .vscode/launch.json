@@ -1,0 +1,43 @@
+{
+    "version": "0.2.0",
+"configurations": [
+        {
+            "name": "Personal Training (Debug Mode)",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "windows", 
+            "program": "frontend/lib/main.dart",
+            "args": [
+                "--dart-define=base_url=http://localhost:8000", 
+                "--dart-define=build_type=debug",
+                "--dart-define=build_version=debug"
+            ],
+            "flutterMode": "debug" 
+        }
+    ],
+    "inputs": [
+        {
+            "id": "server",
+            "type": "pickString",
+            "description": "Z którym serwerem API chcesz się połączyć?",
+            "options": [
+                "http://localhost:8000",
+                "http://192.168.0.110:8081",
+                "http://10.10.0.148:8081"
+            ],
+            "default": "http://localhost:8000"
+        },
+        {
+            "id": "device",
+            "type": "pickString",
+            "description": "Na jakim urządzeniu chcesz uruchomić aplikację?",
+            "options": [
+                "windows",
+                "emulator-5554",
+                "chrome",
+                "edge"
+            ],
+            "default": "windows"
+        }
+    ]
+}

@@ -1,3 +1,6 @@
 {
-    "java.compile.nullAnalysis.mode": "automatic"
+    "dart.debugExternalLibraries": false, // Wyłącza debugowanie bibliotek zewnętrznych
+    "dart.debugSdkLibraries": false, // Wyłącza debugowanie SDK Dart
+    "dart.lineLength": 80, // Maksymalna długość linii w formatowaniu
+    "editor.formatOnSave": true, // Automatyczne formatowanie przy zapisywaniu
 }
