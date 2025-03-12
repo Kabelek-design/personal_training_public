@@ -155,8 +155,8 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(Icons.fitness_center, "Ruchy siłowe", 0),
-              _buildNavItem(Icons.calendar_today, "Plan Treningowy", 1), // Zmieniono ikonę
-              _buildNavItem(Icons.bar_chart, "Statystyki", 2),
+              _buildNavItem(Icons.calendar_today, "Plan", 1), // Zmieniono ikonę
+              _buildNavItem(Icons.bar_chart, "Wyniki", 2),
               _buildNavItem(Icons.person, "Profil", 3),
             ],
           ),

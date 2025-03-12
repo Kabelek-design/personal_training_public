@@ -326,8 +326,6 @@ class ApiService {
 
 
 // Plan treningowy hyper
-
-
 Future<List<TrainingPlanSchedule>> getAllTrainingPlans(
     int userId, {
     DateTime? fromDate,
@@ -465,7 +463,7 @@ Future<List<TrainingPlanSchedule>> getAllTrainingPlans(
         throw Exception('Błąd danych: ${response.body}');
       } else {
         throw Exception(
-            'Nie udało się utworzyć planu: ${response.statusCode} - ${response.body}');
+            'Nie udało się utworzyć planu: - ${response.body}');
       }
     } catch (e) {
       throw Exception('Wystąpił wyjątek: $e');
