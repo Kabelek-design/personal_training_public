@@ -1,12 +1,20 @@
 # Personal Training App
 
+## Overview
+The **Personal Training App** is designed for tracking strength progress in major compound lifts. Users can register and select one of two predefined training plans (Plan A or Plan B), entering their personal data such as nickname, weight, age, height, and target weight. Based on this selection, the strength movements are initialized with predefined set/rep schemes (6/4/2 or 6/4/6).
+
+The app provides a structured way to monitor progress in the **Bench Press, Deadlift, and Squat**, allowing users to edit their **one-rep max (1RM)** values. Additional exercises can be added and used in the **weekly training plan** for a customized workout schedule.
+
+A dedicated **profile section** allows users to update their details, while the **goals tab** enables weight tracking, displaying progress toward the target weight, forecasting trends, and logging history.
+
 ## Features
-- User registration and authentication
-- Training plan selection (Plan A & Plan B with different set/rep schemes)
-- Workout progress tracking (Bench Press, Squats, Deadlift)
-- One Rep Max (1RM) calculation
-- AMRAP (As Many Reps As Possible) tracking
-- Unified UI color scheme
+- **User Management:** User registration and profile customization.
+- **Training Plans:** Selection of Plan A or Plan B, defining a structured set/rep progression.
+- **Strength Progress Tracking:** Edit and track 1RM for core lifts (Bench Press, Squat, Deadlift).
+- **Exercise Management:** Add and manage additional exercises for use in the weekly training plan.
+- **Training Scheduler:** Plan and organize weekly workouts.
+- **Weight Monitoring:** Track current weight, compare with target weight, view history, and progress forecast.
+- **UI/UX:** Unified design with structured navigation for training, statistics, and profile management.
 
 ## Tech Stack
 - **Frontend:** Flutter (Dart)
@@ -14,8 +22,7 @@
 - **Database:** MySQL (via Docker or local installation)
 - **Containerization:** Docker + Docker Compose
 
-## Run with Docker
-
+## Running the App with Docker
 ```bash
 docker compose down -v  # Stop and remove volumes (optional)
 docker compose build --no-cache  # Build fresh containers
@@ -23,36 +30,121 @@ docker compose up  # Start the app
 ```
 
 ## Database Migrations (Alembic - FastAPI ORM)
-
 If you modify models, generate and apply new migration files:
-
 ```bash
 alembic revision --autogenerate -m "Add or update models"
 alembic upgrade head  # Apply migrations
 ```
 
-## Build the Mobile App (Flutter)
-
+## Building the Mobile App (Flutter)
 For Android:
 ```bash
 flutter build apk --release
 ```
-
 For iOS (requires macOS):
 ```bash
 flutter build ios --release
 ```
 
 ## Roadmap
-
 - Workout history & analytics
 - Cloud sync for progress tracking
 - Social features (progress sharing, challenges)
 
 ## Contributing
-
 Fork the repository and submit a pull request.
 
-## Contact
+## Screenshots
 
-https://github.com/Kabelek-design or mikekabelek@gmail.com
+![Screen 1](screenshots/screen_1.jpg)
+![Screen 2](screenshots/screen_2.jpg)
+![Screen 3](screenshots/screen_3.jpg)
+![Screen 4](screenshots/screen_4.jpg)
+![Screen 5](screenshots/screen_5.jpg)
+![Screen 6](screenshots/screen_6.jpg)
+![Screen 7](screenshots/screen_7.jpg)
+![Screen 8](screenshots/screen_8.jpg)
+![Screen 9](screenshots/screen_9.jpg)
+
+## Contact
+[GitHub Profile](https://github.com/Kabelek-design) or email: **mikekabelek@gmail.com**
+
+
+
+---
+
+
+
+# Aplikacja Treningowa
+
+## Przegląd
+**Aplikacja Treningowa** służy do monitorowania progresu siłowego w podstawowych bojach siłowych. Użytkownicy mogą rejestrować się i wybierać jeden z dwóch dostępnych planów treningowych (Plan A lub Plan B), podając swoje dane, takie jak nick, waga, wiek, wzrost i waga docelowa.
+
+Na podstawie wyboru planu treningowego, aplikacja automatycznie przypisuje schemat serii i powtórzeń (6/4/2 lub 6/4/6).
+
+Aplikacja umożliwia śledzenie progresji w **wyciskaniu na ławce, martwym ciągu i przysiadach**, pozwalając na edytowanie wartości **maksymalnego powtórzenia (1RM)**. Dodatkowo można dodawać nowe ćwiczenia i używać ich do budowania własnego **tygodniowego planu treningowego**.
+
+W zakładce **profil** użytkownicy mogą edytować swoje dane, natomiast sekcja **cele** pozwala na monitorowanie wagi, porównanie jej z wagą docelową, prognozowanie progresu i rejestrowanie historii.
+
+## Funkcje
+- **Zarządzanie użytkownikami:** Rejestracja użytkownika i personalizacja profilu.
+- **Plany treningowe:** Wybór Planu A lub B z określoną progresją serii/powtórzeń.
+- **Śledzenie progresu:** Możliwość edycji i monitorowania 1RM dla podstawowych bojów.
+- **Zarządzanie ćwiczeniami:** Możliwość dodawania nowych ćwiczeń do planu.
+- **Planowanie treningów:** Tworzenie tygodniowego harmonogramu treningowego.
+- **Monitorowanie wagi:** Śledzenie aktualnej wagi, porównanie z wagą docelową, historia pomiarów.
+- **Intuicyjny interfejs:** Spójny design i nawigacja w zakresie treningu, statystyk i profilu.
+
+## Stack technologiczny
+- **Frontend:** Flutter (Dart)
+- **Backend:** FastAPI (Python)
+- **Baza danych:** MySQL (Docker lub lokalna instalacja)
+- **Konteneryzacja:** Docker + Docker Compose
+
+## Uruchamianie aplikacji z Dockerem
+```bash
+docker compose down -v  # Zatrzymanie i usunięcie wolumenów (opcjonalne)
+docker compose build --no-cache  # Budowanie czystych kontenerów
+docker compose up  # Uruchomienie aplikacji
+```
+
+## Migracje bazy danych (Alembic - FastAPI ORM)
+W przypadku zmian w modelach można wygenerować i zastosować nowe migracje:
+```bash
+alembic revision --autogenerate -m "Dodano lub zmodyfikowano modele"
+alembic upgrade head  # Zastosowanie migracji
+```
+
+## Budowanie aplikacji mobilnej (Flutter)
+Dla Androida:
+```bash
+flutter build apk --release
+```
+Dla iOS (wymaga macOS):
+```bash
+flutter build ios --release
+```
+
+## Plan rozwoju
+- Historia treningów i analizy statystyczne
+- Synchronizacja w chmurze dla śledzenia progresu
+- Funkcje społecznościowe (dzielenie się postępami, wyzwania)
+
+## Współtworzenie projektu
+Forkuj repozytorium i prześlij pull request.
+
+## Screenshots
+
+![Screen 1](screenshots/screen_1.jpg)
+![Screen 2](screenshots/screen_2.jpg)
+![Screen 3](screenshots/screen_3.jpg)
+![Screen 4](screenshots/screen_4.jpg)
+![Screen 5](screenshots/screen_5.jpg)
+![Screen 6](screenshots/screen_6.jpg)
+![Screen 7](screenshots/screen_7.jpg)
+![Screen 8](screenshots/screen_8.jpg)
+![Screen 9](screenshots/screen_9.jpg)
+
+## Kontakt
+[Profil GitHub](https://github.com/Kabelek-design) lub e-mail: **mikekabelek@gmail.com**
+
