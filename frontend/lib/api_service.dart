@@ -600,4 +600,36 @@ Future<List<TrainingPlanSchedule>> getAllTrainingPlans(
     }
   }
 
+  Future<Map<String, dynamic>> changePlan({
+  required int userId,
+  required String planVersion,
+}) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/$usersEndpoint${userId.toString()}/change-plan'),
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode({
+      "plan_version": planVersion,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception('Nie udało się zmienić planu treningowego: ${response.statusCode} - ${response.body}');
+  }
+}
+
+Future<Map<String, dynamic>> comparePlans() async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/compare-plans'),
+    headers: {"Content-Type": "application/json"},
+  );
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception('Nie udało się pobrać porównania planów: ${response.statusCode} - ${response.body}');
+  }
+}
+
 }

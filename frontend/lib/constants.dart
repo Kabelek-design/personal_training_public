@@ -6,3 +6,5 @@ const String exercisesEndpoint = "exercises";
 const String weekPlanEndpoint = "plan/week";
 const String usersEndpoint = "users/";
 const String trainingScheduleEndpoint = "training-schedule";
+const String changePlanEndpoint = "change-plan";
+const String comparePlansEndpoint = "compare-plans";

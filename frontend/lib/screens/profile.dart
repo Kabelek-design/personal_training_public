@@ -25,6 +25,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   late TextEditingController _heightController;
   late TextEditingController _weightController;
   String? _selectedGender;
+  bool isChangingPlan = false; // Dodaj tę zmienną do śledzenia stanu zmiany planu
+  bool isLoadingPlanDetails = false; // Stan ładowania szczegółów planu
+  Map<String, dynamic>? planDetails; // Szczegóły planów
 
   @override
   void initState() {
@@ -156,6 +159,187 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     _heightController.dispose();
     _weightController.dispose();
     super.dispose();
+  }
+
+
+  Future<void> _changePlan(String newPlanVersion) async {
+    if (userNotifier.value == null) return;
+    if (userNotifier.value!.planVersion == newPlanVersion) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Już używasz planu $newPlanVersion')),
+      );
+      return;
+    }
+
+    try {
+      setState(() {
+        isLoading = true;
+      });
+      
+      // Wywołanie API do zmiany planu
+      await apiService.changePlan(
+        userId: userNotifier.value!.id,
+        planVersion: newPlanVersion,
+      );
+      
+      // Aktualizacja użytkownika po zmianie planu
+      final updatedUser = await apiService.fetchUser(userNotifier.value!.id);
+      
+      // Zapisz nowy plan_version w SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('planVersion', newPlanVersion);
+      
+      setState(() {
+        userNotifier.value = updatedUser;
+        isChangingPlan = false;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Plan treningowy zmieniony na plan $newPlanVersion')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Błąd podczas zmiany planu: $e')),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+  
+  // Metoda do pobierania szczegółów planów
+  Future<void> _loadPlanDetails() async {
+    try {
+      setState(() {
+        isLoadingPlanDetails = true;
+      });
+      
+      final details = await apiService.comparePlans();
+      
+      setState(() {
+        planDetails = details;
+        isLoadingPlanDetails = false;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Błąd pobierania szczegółów planów: $e')),
+      );
+      setState(() {
+        isLoadingPlanDetails = false;
+      });
+    }
+  }
+  
+  // Dodaj tę metodę do wyświetlania opisu planu
+  void _showPlanDescription(BuildContext context) {
+    _loadPlanDetails(); // Załaduj szczegóły planów
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Porównanie planów treningowych'),
+          content: isLoadingPlanDetails
+              ? const SizedBox(
+                  height: 100,
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : planDetails == null
+                  ? const Text('Nie udało się załadować szczegółów planów.')
+                  : SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(height: 10),
+                          Text(
+                            'Plan A:',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurple,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(planDetails!['differences']['plan_a']['description'] ?? ''),
+                          const SizedBox(height: 5),
+                          ...((planDetails!['differences']['plan_a']['characteristics'] as List?)
+                                  ?.map((item) => Padding(
+                                        padding: const EdgeInsets.only(left: 10, top: 5),
+                                        child: Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text('• '),
+                                            Expanded(child: Text(item)),
+                                          ],
+                                        ),
+                                      ))
+                                  .toList() ??
+                              []),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Plan B:',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurple,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(planDetails!['differences']['plan_b']['description'] ?? ''),
+                          const SizedBox(height: 5),
+                          ...((planDetails!['differences']['plan_b']['characteristics'] as List?)
+                                  ?.map((item) => Padding(
+                                        padding: const EdgeInsets.only(left: 10, top: 5),
+                                        child: Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text('• '),
+                                            Expanded(child: Text(item)),
+                                          ],
+                                        ),
+                                      ))
+                                  .toList() ??
+                              []),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Kluczowe różnice:',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurple,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          ...((planDetails!['differences']['key_differences'] as List?)
+                                  ?.map((item) => Padding(
+                                        padding: const EdgeInsets.only(left: 10, top: 5),
+                                        child: Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text('• '),
+                                            Expanded(child: Text(item)),
+                                          ],
+                                        ),
+                                      ))
+                                  .toList() ??
+                              []),
+                        ],
+                      ),
+                    ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.deepPurple,
+              ),
+              child: const Text('Zamknij'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildInfoRow(String label, String value) {
@@ -322,6 +506,107 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                                           _buildInfoRow('Wzrost:', '${user?.height.toStringAsFixed(1) ?? "Nie podano"} cm'),
                                           _buildInfoRow('Waga:', '${user?.weight.toStringAsFixed(1) ?? "Nie podano"} kg'),
                                           _buildInfoRow('Płeć:', user?.gender == "M" ? "Mężczyzna" : user?.gender == "F" ? "Kobieta" : "Nie podano"),
+                                          _buildInfoRow('Plan treningowy:', userNotifier.value?.planVersion == 'A' ? 'Plan A (6/4/2)' : 'Plan B (6/4/6)'),
+                                            Padding(
+                                              padding: const EdgeInsets.only(top: 8.0, left: 100.0),
+                                              child: Row(
+                                                children: [
+                                                  OutlinedButton.icon(
+                                                    icon: const Icon(Icons.info_outline),
+                                                    label: const Text('Szczegóły planów'),
+                                                    onPressed: () => _showPlanDescription(context),
+                                                    style: OutlinedButton.styleFrom(
+                                                      foregroundColor: Colors.deepPurple,
+                                                      side: BorderSide(color: Colors.deepPurple),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 10),
+                                                  ElevatedButton.icon(
+                                                    icon: const Icon(Icons.swap_horiz),
+                                                    label: const Text('Zmień plan'),
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        isChangingPlan = true;
+                                                      });
+                                                    },
+                                                    style: ElevatedButton.styleFrom(
+                                                      backgroundColor: Colors.deepPurple,
+                                                      foregroundColor: Colors.white,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),),
+                                              if (isChangingPlan)
+  Padding(
+    padding: const EdgeInsets.only(top: 16.0, left: 100.0),
+    child: Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: Colors.deepPurple.shade200, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Wybierz plan treningowy',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Uwaga: Zmiana planu spowoduje wygenerowanie nowych treningów na wszystkie tygodnie i zresetowanie progresji.',
+              style: TextStyle(color: Colors.red, fontSize: 12),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: () => _changePlan('A'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: userNotifier.value?.planVersion == 'A' ? Colors.grey : Colors.deepPurple,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Plan A (6/4/2)'),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: () => _changePlan('B'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: userNotifier.value?.planVersion == 'B' ? Colors.grey : Colors.deepPurple,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Plan B (6/4/6)'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                icon: const Icon(Icons.close),
+                label: const Text('Anuluj'),
+                onPressed: () {
+                  setState(() {
+                    isChangingPlan = false;
+                  });
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.grey,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  ),
+                                            
                                         ] else ...[
                                           TextField(
                                             controller: _nicknameController,
@@ -391,6 +676,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       ),
                     ),
                   ],
+                  
                 ),
         ),
       ),
