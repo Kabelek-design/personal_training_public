@@ -122,9 +122,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      if (planVersion == null) {
-        planVersion = prefs.getString('planVersion') ?? "A";
-      }
+      planVersion ??= prefs.getString('planVersion') ?? "A";
 
       final exercises = await _apiService.fetchExercises(userId: currentUserId!).timeout(const Duration(seconds: 10));
       final Map<int, Exercise> exercisesMap = {for (var ex in exercises) ex.id: ex};

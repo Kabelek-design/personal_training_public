@@ -26,10 +26,8 @@ class _ProfileScreenState extends State<ProfileScreen>
   late TextEditingController _heightController;
   late TextEditingController _weightController;
   String? _selectedGender;
-  bool isChangingPlan =
-      false; // Dodaj tę zmienną do śledzenia stanu zmiany planu
-  bool isLoadingPlanDetails = false; // Stan ładowania szczegółów planu
-  Map<String, dynamic>? planDetails; // Szczegóły planów
+  bool isChangingPlan = false;
+  String? currentPlanVersion;
 
   @override
   void initState() {
@@ -67,6 +65,9 @@ class _ProfileScreenState extends State<ProfileScreen>
         return;
       }
 
+      // Pobierz plan z SharedPreferences, żeby był aktualny
+      final planFromPrefs = prefs.getString('planVersion');
+      
       final user = await apiService.fetchUser(userId);
       setState(() {
         userNotifier.value = user;
@@ -75,6 +76,10 @@ class _ProfileScreenState extends State<ProfileScreen>
         _heightController.text = user.height.toString();
         _weightController.text = user.weight.toString();
         _selectedGender = user.gender;
+        
+        // Ustaw plan albo z API albo z SharedPreferences, dając priorytet SharedPreferences
+        currentPlanVersion = planFromPrefs ?? user.planVersion;
+        
         isLoading = false;
       });
     } catch (e) {
@@ -165,7 +170,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Future<void> _changePlan(String newPlanVersion) async {
     if (userNotifier.value == null) return;
-    if (userNotifier.value!.planVersion == newPlanVersion) {
+    if (currentPlanVersion == newPlanVersion) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Już używasz planu $newPlanVersion')),
       );
@@ -192,6 +197,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
       setState(() {
         userNotifier.value = updatedUser;
+        currentPlanVersion = newPlanVersion; // Aktualizuj lokalną zmienną
         isChangingPlan = false;
       });
 
@@ -208,154 +214,6 @@ class _ProfileScreenState extends State<ProfileScreen>
         isLoading = false;
       });
     }
-  }
-
-  // Metoda do pobierania szczegółów planów
-Future<void> _loadPlanDetails() async {
-  try {
-    setState(() {
-      isLoadingPlanDetails = true;
-    });
-
-    // Pass the userId to comparePlans
-    final details = await apiService.comparePlans(userId: userNotifier.value!.id);
-
-    setState(() {
-      planDetails = details;
-      isLoadingPlanDetails = false;
-    });
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Błąd pobierania szczegółów planów: $e')),
-    );
-    setState(() {
-      isLoadingPlanDetails = false;
-    });
-  }
-}
-
-  // Dodaj tę metodę do wyświetlania opisu planu
-  void _showPlanDescription(BuildContext context) {
-    _loadPlanDetails(); // Załaduj szczegóły planów
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Porównanie planów treningowych'),
-          content: isLoadingPlanDetails
-              ? const SizedBox(
-                  height: 100,
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              : planDetails == null
-                  ? const Text('Nie udało się załadować szczegółów planów.')
-                  : SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const SizedBox(height: 10),
-                          Text(
-                            'Plan A:',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.deepPurple,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(planDetails!['differences']['plan_a']
-                                  ['description'] ??
-                              ''),
-                          const SizedBox(height: 5),
-                          ...((planDetails!['differences']['plan_a']
-                                      ['characteristics'] as List?)
-                                  ?.map((item) => Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 10, top: 5),
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const Text('• '),
-                                            Expanded(child: Text(item)),
-                                          ],
-                                        ),
-                                      ))
-                                  .toList() ??
-                              []),
-                          const SizedBox(height: 20),
-                          Text(
-                            'Plan B:',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.deepPurple,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(planDetails!['differences']['plan_b']
-                                  ['description'] ??
-                              ''),
-                          const SizedBox(height: 5),
-                          ...((planDetails!['differences']['plan_b']
-                                      ['characteristics'] as List?)
-                                  ?.map((item) => Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 10, top: 5),
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const Text('• '),
-                                            Expanded(child: Text(item)),
-                                          ],
-                                        ),
-                                      ))
-                                  .toList() ??
-                              []),
-                          const SizedBox(height: 20),
-                          Text(
-                            'Kluczowe różnice:',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.deepPurple,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          ...((planDetails!['differences']['key_differences']
-                                      as List?)
-                                  ?.map((item) => Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 10, top: 5),
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const Text('• '),
-                                            Expanded(child: Text(item)),
-                                          ],
-                                        ),
-                                      ))
-                                  .toList() ??
-                              []),
-                        ],
-                      ),
-                    ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.deepPurple,
-              ),
-              child: const Text('Zamknij'),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   Widget _buildInfoRow(String label, String value) {
@@ -387,6 +245,18 @@ Future<void> _loadPlanDetails() async {
         ],
       ),
     );
+  }
+
+  // Metoda która zwraca opis planu treningowego
+  String _getPlanDescription(String? planVersion) {
+    switch (planVersion) {
+      case 'A':
+        return 'Plan A (6/4/2)';
+      case 'B':
+        return 'Plan B (6/4/6)';
+      default:
+        return 'Nieznany plan';
+    }
   }
 
   @override
@@ -539,58 +409,26 @@ Future<void> _loadPlanDetails() async {
                                                       : "Nie podano"),
                                           _buildInfoRow(
                                               'Plan treningowy:',
-                                              userNotifier.value?.planVersion ==
-                                                      'A'
-                                                  ? 'Plan A (6/4/2)'
-                                                  : 'Plan B (6/4/6)'),
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                top: 8.0, left: 100.0),
-                                            child: Row(
-                                              children: [
-                                                OutlinedButton.icon(
-                                                  icon: const Icon(
-                                                      Icons.info_outline),
-                                                  label: const Text(
-                                                      'Szczegóły planów'),
-                                                  onPressed: () =>
-                                                      _showPlanDescription(
-                                                          context),
-                                                  style:
-                                                      OutlinedButton.styleFrom(
-                                                    foregroundColor:
-                                                        Colors.deepPurple,
-                                                    side: BorderSide(
-                                                        color:
-                                                            Colors.deepPurple),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 10),
-                                                ElevatedButton.icon(
-                                                  icon: const Icon(
-                                                      Icons.swap_horiz),
-                                                  label:
-                                                      const Text('Zmień plan'),
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      isChangingPlan = true;
-                                                    });
-                                                  },
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        Colors.deepPurple,
-                                                    foregroundColor:
-                                                        Colors.white,
-                                                  ),
-                                                ),
-                                              ],
+                                              _getPlanDescription(currentPlanVersion)),
+                                          
+                                          SizedBox(height: 15),
+                                          ElevatedButton.icon(
+                                            icon: const Icon(Icons.swap_horiz),
+                                            label: const Text('Zmień plan treningowy'),
+                                            onPressed: () {
+                                              setState(() {
+                                                isChangingPlan = true;
+                                              });
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.deepPurple,
+                                              foregroundColor: Colors.white,
                                             ),
                                           ),
+                                          
                                           if (isChangingPlan)
                                             Padding(
-                                              padding: const EdgeInsets.only(
-                                                  top: 16.0, left: 100.0),
+                                              padding: const EdgeInsets.only(top: 16.0),
                                               child: Card(
                                                 elevation: 3,
                                                 shape: RoundedRectangleBorder(
@@ -639,10 +477,7 @@ Future<void> _loadPlanDetails() async {
                                                             style:
                                                                 ElevatedButton
                                                                     .styleFrom(
-                                                              backgroundColor: userNotifier
-                                                                          .value
-                                                                          ?.planVersion ==
-                                                                      'A'
+                                                              backgroundColor: currentPlanVersion == 'A'
                                                                   ? Colors.grey
                                                                   : Colors
                                                                       .deepPurple,
@@ -661,10 +496,7 @@ Future<void> _loadPlanDetails() async {
                                                             style:
                                                                 ElevatedButton
                                                                     .styleFrom(
-                                                              backgroundColor: userNotifier
-                                                                          .value
-                                                                          ?.planVersion ==
-                                                                      'B'
+                                                              backgroundColor: currentPlanVersion == 'B'
                                                                   ? Colors.grey
                                                                   : Colors
                                                                       .deepPurple,
@@ -695,7 +527,7 @@ Future<void> _loadPlanDetails() async {
                                                           style: TextButton
                                                               .styleFrom(
                                                             foregroundColor:
-                                                                Colors.grey,
+                                                                Colors.black,
                                                           ),
                                                         ),
                                                       ),
