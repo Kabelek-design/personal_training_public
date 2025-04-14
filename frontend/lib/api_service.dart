@@ -16,10 +16,8 @@ class ApiService {
       final response = await http.get(
         Uri.parse('$baseUrl/$endpoint'),
         headers: {
-          'Content-Type':
-              'application/json; charset=utf-8', 
-          'Accept':
-              'application/json; charset=utf-8', 
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json; charset=utf-8',
         },
       );
       if (response.statusCode == 200) {
@@ -58,15 +56,12 @@ class ApiService {
       Uri.parse(
           '$baseUrl/users/$userId/plan/week/$weekNumber?plan_version=$planVersion'),
       headers: {
-        'Content-Type':
-            'application/json; charset=utf-8', 
-        'Accept':
-            'application/json; charset=utf-8', 
+        'Content-Type': 'application/json; charset=utf-8',
+        'Accept': 'application/json; charset=utf-8',
       },
     );
 
     if (response.statusCode == 200) {
-      
       final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
       return data.map((json) => TrainingPlan.fromJson(json)).toList();
     } else {
@@ -85,8 +80,7 @@ class ApiService {
     final response = await http.post(
       Uri.parse('$baseUrl/users/$userId/plan/week/$weekNumber/amrap'),
       headers: {
-        "Content-Type":
-            "application/json; charset=utf-8", 
+        "Content-Type": "application/json; charset=utf-8",
       },
       body: jsonEncode({
         "set_id": setId,
@@ -101,12 +95,10 @@ class ApiService {
   }
 
   Future<void> addExercise(int userId, String name, double oneRepMax) async {
-   
     final response = await http.post(
       Uri.parse('$baseUrl/users/$userId/$exercisesEndpoint'),
       headers: {
-        'Content-Type':
-            'application/json; charset=utf-8', 
+        'Content-Type': 'application/json; charset=utf-8',
       },
       body: json.encode([
         {'name': name, 'one_rep_max': oneRepMax}
@@ -324,9 +316,8 @@ class ApiService {
     }
   }
 
-
 // Plan treningowy hyper
-Future<List<TrainingPlanSchedule>> getAllTrainingPlans(
+  Future<List<TrainingPlanSchedule>> getAllTrainingPlans(
     int userId, {
     DateTime? fromDate,
     DateTime? toDate,
@@ -336,7 +327,8 @@ Future<List<TrainingPlanSchedule>> getAllTrainingPlans(
       if (fromDate != null || toDate != null) {
         final queryParams = <String, String>{};
         if (fromDate != null) {
-          queryParams['from_date'] = fromDate.toIso8601String().substring(0, 10);
+          queryParams['from_date'] =
+              fromDate.toIso8601String().substring(0, 10);
         }
         if (toDate != null) {
           queryParams['to_date'] = toDate.toIso8601String().substring(0, 10);
@@ -356,7 +348,8 @@ Future<List<TrainingPlanSchedule>> getAllTrainingPlans(
         final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
         return data.map((json) => TrainingPlanSchedule.fromJson(json)).toList();
       } else if (response.statusCode == 404) {
-        throw Exception('Nie znaleziono planów treningowych dla użytkownika $userId');
+        throw Exception(
+            'Nie znaleziono planów treningowych dla użytkownika $userId');
       } else {
         throw Exception(
             'Błąd pobierania planów treningowych: ${response.statusCode} - ${response.body}');
@@ -367,11 +360,13 @@ Future<List<TrainingPlanSchedule>> getAllTrainingPlans(
   }
 
   /// Pobieranie harmonogramu na konkretny dzień
-  Future<List<TrainingPlanSchedule>> getTrainingPlansForDay(int userId, DateTime dayDate) async {
+  Future<List<TrainingPlanSchedule>> getTrainingPlansForDay(
+      int userId, DateTime dayDate) async {
     try {
       final formattedDate = dayDate.toIso8601String().substring(0, 10);
       final response = await http.get(
-        Uri.parse('$baseUrl/users/$userId/training-schedule/day/$formattedDate'),
+        Uri.parse(
+            '$baseUrl/users/$userId/training-schedule/day/$formattedDate'),
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           'Accept': 'application/json; charset=utf-8',
@@ -393,7 +388,8 @@ Future<List<TrainingPlanSchedule>> getAllTrainingPlans(
   }
 
   /// Pobieranie harmonogramu na bieżący tydzień
-  Future<List<TrainingPlanSchedule>> getTrainingPlansForCurrentWeek(int userId) async {
+  Future<List<TrainingPlanSchedule>> getTrainingPlansForCurrentWeek(
+      int userId) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/users/$userId/training-schedule/current-week'),
@@ -418,7 +414,8 @@ Future<List<TrainingPlanSchedule>> getAllTrainingPlans(
   }
 
   /// Pobieranie konkretnego planu treningowego
-  Future<TrainingPlanSchedule> getTrainingPlan(int userId, int trainingPlanId) async {
+  Future<TrainingPlanSchedule> getTrainingPlan(
+      int userId, int trainingPlanId) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/users/$userId/training-schedule/$trainingPlanId'),
@@ -443,7 +440,8 @@ Future<List<TrainingPlanSchedule>> getAllTrainingPlans(
   }
 
   /// Tworzenie nowego planu treningowego
-  Future<TrainingPlanSchedule> createTrainingPlan(int userId, TrainingPlanSchedule plan) async {
+  Future<TrainingPlanSchedule> createTrainingPlan(
+      int userId, TrainingPlanSchedule plan) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/users/$userId/training-schedule/'),
@@ -451,7 +449,9 @@ Future<List<TrainingPlanSchedule>> getAllTrainingPlans(
           'Content-Type': 'application/json; charset=utf-8',
           'Accept': 'application/json; charset=utf-8',
         },
-        body: jsonEncode(plan.toJson()..remove('id')..remove('created_at')), // ID i created_at nadaje backend
+        body: jsonEncode(plan.toJson()
+          ..remove('id')
+          ..remove('created_at')), // ID i created_at nadaje backend
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -462,8 +462,7 @@ Future<List<TrainingPlanSchedule>> getAllTrainingPlans(
       } else if (response.statusCode == 400) {
         throw Exception('Błąd danych: ${response.body}');
       } else {
-        throw Exception(
-            'Nie udało się utworzyć planu: - ${response.body}');
+        throw Exception('Nie udało się utworzyć planu: - ${response.body}');
       }
     } catch (e) {
       throw Exception('Wystąpił wyjątek: $e');
@@ -525,7 +524,8 @@ Future<List<TrainingPlanSchedule>> getAllTrainingPlans(
       int userId, int trainingPlanId, ExerciseSchedule exercise) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/users/$userId/training-schedule/$trainingPlanId/exercises'),
+        Uri.parse(
+            '$baseUrl/users/$userId/training-schedule/$trainingPlanId/exercises'),
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           'Accept': 'application/json; charset=utf-8',
@@ -548,8 +548,8 @@ Future<List<TrainingPlanSchedule>> getAllTrainingPlans(
   }
 
   /// Aktualizacja ćwiczenia w planie
-  Future<ExerciseSchedule> updateExerciseInPlan(
-      int userId, int trainingPlanId, int exerciseScheduleId, Map<String, dynamic> updateData) async {
+  Future<ExerciseSchedule> updateExerciseInPlan(int userId, int trainingPlanId,
+      int exerciseScheduleId, Map<String, dynamic> updateData) async {
     try {
       final response = await http.patch(
         Uri.parse(
@@ -600,4 +600,37 @@ Future<List<TrainingPlanSchedule>> getAllTrainingPlans(
     }
   }
 
+  Future<Map<String, dynamic>> changePlan({
+    required int userId,
+    required String planVersion,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/$usersEndpoint${userId.toString()}/change-plan'),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "plan_version": planVersion,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(
+          'Nie udało się zmienić planu treningowego: ${response.statusCode} - ${response.body}');
+    }
+  }
+
+Future<Map<String, dynamic>> comparePlans({required int userId}) async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/$usersEndpoint$userId/$comparePlansEndpoint'),
+    headers: {"Content-Type": "application/json"},
+  );
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception(
+        'Nie udało się pobrać porównania planów: ${response.statusCode} - ${response.body}');
+  }
+}
 }

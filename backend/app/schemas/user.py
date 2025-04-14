@@ -40,3 +40,6 @@ class User(UserBase):
 
     class Config:
         from_attributes = True
+        
+class PlanVersionChange(BaseModel):
+    plan_version: str

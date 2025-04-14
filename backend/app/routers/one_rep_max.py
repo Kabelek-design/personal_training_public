@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 from typing import List
+from typing import Dict, Any, List
 from app.schemas.one_rep_max import Exercise, ExerciseCreate, Set, SetCreate, WeekPlan, WeekPlanCreate, AmrapResult
 from app.models.one_rep_max import Exercise as ExerciseModel, Set as SetModel, WeekPlan as WeekPlanModel
 from app.models.user import User as UserModel
@@ -238,3 +239,133 @@ def generate_week_plan(user_id: int, week_number: int, db: Session, plan_version
     
     db.commit()
     return plans
+
+@router.get("/compare-plans", response_model=Dict[str, Any])
+def compare_training_plans(db: Session = Depends(get_db)):
+    """
+    Porównuje plany treningowe A i B, pokazując różnice w układzie ćwiczeń
+    
+    Returns:
+        Słownik z opisem obu planów treningowych
+    """
+    # Definicja Planu A
+    week_plans_a = {
+        1: {
+            "squats": [(6, 62.5, False), (6, 70, False), (6, 70, False), (6, 70, True)],
+            "dead_lift": [(4, 70, False), (4, 75, False), (4, 80, False), (4, 80, False), (4, 80, True)],
+            "bench_press": [(6, 65, False), (4, 75, False), (2, 85, False), (2, 90, False), (2, 90, True), (4, 75, False)]
+        },
+        2: {
+            "squats": [(6, 65, False), (4, 75, False), (2, 85, False), (2, 90, False), (2, 90, True), (4, 75, False)],
+            "dead_lift": [(6, 62.5, False), (6, 70, False), (6, 70, False), (6, 70, True)],
+            "bench_press": [(4, 70, False), (4, 75, False), (4, 80, False), (4, 80, False), (4, 80, True)]
+        },
+        3: {
+            "squats": [(4, 70, False), (4, 75, False), (4, 80, False), (4, 80, False), (4, 80, True)],
+            "dead_lift": [(6, 65, False), (4, 75, False), (2, 85, False), (2, 90, False), (2, 90, True), (4, 75, False)],
+            "bench_press": [(6, 62.5, False), (6, 70, False), (6, 70, False), (6, 70, True)]
+        },
+        4: {
+            "squats": [(6, 65, False), (4, 75, False), (2, 85, False), (2, 90, False), (2, 90, True), (4, 75, False)],
+            "dead_lift": [(6, 65, False), (4, 75, False), (2, 85, False), (2, 90, False), (2, 90, True), (4, 75, False)],
+            "bench_press": [(6, 65, False), (4, 75, False), (2, 85, False), (2, 90, False), (2, 90, True), (4, 75, False)]
+        },
+        5: {
+            "squats": [(4, 50, False), (3, 65, False), (2, 80, False), (1, 90, False)],
+            "dead_lift": [(4, 50, False), (3, 65, False), (2, 80, False), (1, 90, False)],
+            "bench_press": [(4, 50, False), (3, 65, False), (2, 80, False), (1, 90, False)]
+        },
+        6: {
+            "squats": [(5, 50, False), (4, 60, False), (3, 70, False), (2, 80, False), (1, 90, False), (1, 100, False)],
+            "dead_lift": [(5, 50, False), (4, 60, False), (3, 70, False), (2, 80, False), (1, 90, False), (1, 100, False)],
+            "bench_press": [(5, 50, False), (4, 60, False), (3, 70, False), (2, 80, False), (1, 90, False), (1, 100, False)]
+        }
+    }
+
+    # Definicja Planu B
+    week_plans_b = {
+        1: {
+            "squats": [(6, 62.5, False), (6, 70, False), (6, 70, False), (6, 70, True)],
+            "dead_lift": [(6, 62.5, False), (6, 70, False), (6, 70, False), (6, 70, True)],
+            "bench_press": [(6, 62.5, False), (6, 70, False), (6, 70, False), (6, 70, True)]
+        },
+        2: {
+            "squats": [(4, 70, False), (4, 75, False), (4, 80, False), (4, 80, False), (4, 80, True)],
+            "dead_lift": [(4, 70, False), (4, 75, False), (4, 80, False), (4, 80, False), (4, 80, True)],
+            "bench_press": [(4, 70, False), (4, 75, False), (4, 80, False), (4, 80, False), (4, 80, True)]
+        },
+        3: {
+            "squats": [(6, 62.5, False), (6, 70, False), (6, 70, False), (6, 70, True)],
+            "dead_lift": [(6, 62.5, False), (6, 70, False), (6, 70, False), (6, 70, True)],
+            "bench_press": [(6, 62.5, False), (6, 70, False), (6, 70, False), (6, 70, True)]
+        },
+        4: {
+            "squats": [(4, 70, False), (4, 75, False), (4, 80, False), (4, 80, False), (4, 80, True)],
+            "dead_lift": [(4, 70, False), (4, 75, False), (4, 80, False), (4, 80, False), (4, 80, True)],
+            "bench_press": [(4, 70, False), (4, 75, False), (4, 80, False), (4, 80, False), (4, 80, True)]
+        },
+        5: {
+            "squats": [(4, 50, False), (3, 65, False), (2, 80, False), (1, 90, False)],
+            "dead_lift": [(4, 50, False), (3, 65, False), (2, 80, False), (1, 90, False)],
+            "bench_press": [(4, 50, False), (3, 65, False), (2, 80, False), (1, 90, False)]
+        },
+        6: {
+            "squats": [(5, 60, False), (4, 70, False), (3, 80, False), (2, 90, True), (1, 100, False)],
+            "dead_lift": [(5, 60, False), (4, 70, False), (3, 80, False), (2, 90, True), (1, 100, False)],
+            "bench_press": [(5, 60, False), (4, 70, False), (3, 80, False), (2, 90, True), (1, 100, False)]
+        }
+    }
+    
+    # Opis różnic między planami
+    differences = {
+        "plan_a": {
+            "description": "Plan A (klasyczny) - różnicuje treningi dla każdego ćwiczenia w ciągu tygodni 1-3 (rotacja 6/4/2, 4/6/6, 5/6/4)",
+            "characteristics": [
+                "Tydzień 1-3: Każde ćwiczenie ma inny schemat w różnych tygodniach",
+                "Tydzień 4: Wszystkie ćwiczenia wykonywane w schemacie 6/4/2 z AMRAP",
+                "Tydzień 5: Deload - lżejsze obciążenia dla regeneracji",
+                "Tydzień 6: Test maksymalnego ciężaru (do 100% 1RM)"
+            ]
+        },
+        "plan_b": {
+            "description": "Plan B (zmodyfikowany) - prostszy, z powtarzającym się schematem 6/4/6/4 w tygodniach 1-4",
+            "characteristics": [
+                "Tydzień 1 i 3: Wszystkie ćwiczenia w schemacie 6 powtórzeń",
+                "Tydzień 2 i 4: Wszystkie ćwiczenia w schemacie 4 powtórzeń",
+                "Tydzień 5: Deload - lżejsze obciążenia dla regeneracji",
+                "Tydzień 6: Test maksymalnego ciężaru z AMRAP na przedostatnim zestawie"
+            ]
+        },
+        "key_differences": [
+            "Plan A ma bardziej zróżnicowany układ treningów w tygodniach 1-3",
+            "Plan B ma prostszą, bardziej powtarzalną strukturę (6/4/6/4)",
+            "W Planie B, AMRAP występuje również w tygodniu 6 przed ostatnim obciążeniem"
+        ]
+    }
+    
+    # Tworzenie czytelnej reprezentacji planów
+    plan_a_readable = {}
+    plan_b_readable = {}
+    
+    for week in range(1, 7):
+        plan_a_readable[f"week_{week}"] = {}
+        plan_b_readable[f"week_{week}"] = {}
+        
+        for exercise in ["squats", "dead_lift", "bench_press"]:
+            plan_a_readable[f"week_{week}"][exercise] = [
+                {"reps": r, "percentage": p, "is_amrap": a} 
+                for r, p, a in week_plans_a[week][exercise]
+            ]
+            plan_b_readable[f"week_{week}"][exercise] = [
+                {"reps": r, "percentage": p, "is_amrap": a} 
+                for r, p, a in week_plans_b[week][exercise]
+            ]
+    
+    return {
+        "differences": differences,
+        "plan_a": plan_a_readable,
+        "plan_b": plan_b_readable
+    }
+    
+    router.add_api_route("/compare-plans", compare_plans, methods=["GET"], response_model=dict)
+    
