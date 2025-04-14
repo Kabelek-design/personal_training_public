@@ -22,24 +22,35 @@ class UserBase(BaseModel):
     weight_goal: Optional[float] = None
 
 class UserCreate(UserBase):
-    plan_version: Optional[str] = "A"  # Dodajemy plan_version z domyślną wartością "A"
+    password: str  # Dodane pole hasła
+    plan_version: Optional[str] = "A"
+
+class UserLogin(BaseModel):
+    nickname: str
+    password: str
 
 class UserUpdate(BaseModel):
     nickname: Optional[str] = None
+    password: Optional[str] = None  # Dodane opcjonalne pole hasła
     age: Optional[int] = None
     height: Optional[float] = None
     weight: Optional[float] = None
     gender: Optional[str] = None
     weight_goal: Optional[float] = None
-    plan_version: Optional[str] = None  # Opcjonalne dla aktualizacji
+    plan_version: Optional[str] = None
 
 class User(UserBase):
     id: int
-    exercises: List[Exercise] = []  # Lista ćwiczeń użytkownika
-    weight_history: List[WeightHistory] = []  # Używa lokalnej definicji WeightHistory
+    exercises: List[Exercise] = []
+    weight_history: List[WeightHistory] = []
 
     class Config:
         from_attributes = True
         
 class PlanVersionChange(BaseModel):
     plan_version: str
+
+class LoginResponse(BaseModel):
+    id: int
+    nickname: str
+    token: Optional[str] = None  # Opcjonalnie, jeśli planujesz użyć tokenów

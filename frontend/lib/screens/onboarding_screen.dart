@@ -15,10 +15,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool isLoading = false;
 
   final nicknameController = TextEditingController();
+  final passwordController = TextEditingController(); // Nowy kontroler dla hasła
+  final passwordConfirmController = TextEditingController(); // Kontroler dla potwierdzenia hasła
   final ageController = TextEditingController();
   final heightController = TextEditingController();
   final weightController = TextEditingController();
-  final weightGoalController = TextEditingController(); // Nowy kontroler dla weightGoal
+  final weightGoalController = TextEditingController();
   String? genderValue;
   String? selectedPlan;
   bool isPlanAExpanded = false;
@@ -27,6 +29,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _createUser() async {
     try {
       final nickname = nicknameController.text.trim();
+      final password = passwordController.text; // Pobierz hasło
+      final passwordConfirm = passwordConfirmController.text; // Pobierz potwierdzenie hasła
       final age = int.tryParse(ageController.text) ?? 0;
       final height = double.tryParse(heightController.text) ?? 0.0;
       final weight = double.tryParse(weightController.text) ?? 0.0;
@@ -34,17 +38,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       final gender = genderValue;
       final planVersion = selectedPlan;
 
+      // Sprawdzenie czy wszystkie pola są wypełnione
       if (nickname.isEmpty ||
+          password.isEmpty ||
+          passwordConfirm.isEmpty ||
           age <= 0 ||
           height <= 0 ||
           weight <= 0 ||
-          weightGoal <= 0 || // Sprawdzanie weightGoal
+          weightGoal <= 0 ||
           gender == null ||
           planVersion == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text(
-                  'Wypełnij poprawnie wszystkie pola, w tym cel wagowy i wybór planu')),
+                  'Wypełnij poprawnie wszystkie pola, w tym hasło, cel wagowy i wybór planu')),
+        );
+        return;
+      }
+
+      // Sprawdzenie czy hasła są zgodne
+      if (password != passwordConfirm) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Podane hasła nie są identyczne')),
+        );
+        return;
+      }
+
+      // Sprawdzenie długości hasła
+      if (password.length < 6) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Hasło musi mieć co najmniej 6 znaków')),
         );
         return;
       }
@@ -56,13 +79,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         return;
       }
 
+      // Sprawdź, czy nickname jest już zajęty
+      try {
+        bool userExists = await apiService.checkUserExists(nickname);
+        if (userExists) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Ta nazwa użytkownika jest już zajęta')),
+          );
+          return;
+        }
+      } catch (e) {
+        print('Błąd podczas sprawdzania nazwy użytkownika: $e');
+      }
+
       setState(() {
         isLoading = true;
       });
 
-      // Wywołanie API do stworzenia użytkownika z wybranym planem i weightGoal
+      // Wywołanie API do stworzenia użytkownika z wybranym planem, weightGoal i hasłem
       final newUser = await apiService.createUser(
         nickname: nickname,
+        password: password, // Przekazanie hasła
         age: age,
         height: height,
         weight: weight,

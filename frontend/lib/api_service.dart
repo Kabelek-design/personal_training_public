@@ -4,9 +4,64 @@ import 'package:personal_training/models/training_model.dart';
 import 'package:personal_training/models/training_schedule.dart';
 import 'package:personal_training/models/user_model.dart';
 import 'package:personal_training/models/weight_history.dart';
+import 'package:personal_training/models/auth_model.dart'; // Nowy import
 import 'constants.dart';
 
 class ApiService {
+  
+  /// **Logowanie użytkownika**
+Future<LoginResponse> login({
+  required String nickname,
+  required String password,
+}) async {
+  try {
+    final response = await http.post(
+      Uri.parse('$baseUrl/$usersEndpoint' + 'login'), // Usunięty dodatkowy ukośnik
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+      body: jsonEncode({
+        'nickname': nickname,
+        'password': password,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      return LoginResponse.fromJson(data);
+    } else if (response.statusCode == 401) {
+      throw Exception('Nieprawidłowa nazwa użytkownika lub hasło');
+    } else {
+      throw Exception('Logowanie nie powiodło się: ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Wystąpił wyjątek: $e');
+  }
+}
+
+  /// **Sprawdzenie czy użytkownik istnieje**
+  Future<bool> checkUserExists(String nickname) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/$usersEndpoint'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json; charset=utf-8',
+        },
+      );
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+        final users = data.map((json) => User.fromJson(json)).toList();
+        return users.any((user) => user.nickname == nickname);
+      } else {
+        throw Exception('Błąd podczas sprawdzania użytkownika: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Wystąpił wyjątek: $e');
+    }
+  }
+
   /// **Pobranie listy ćwiczeń**
   Future<List<Exercise>> fetchExercises({int? userId}) async {
     try {
@@ -172,6 +227,7 @@ class ApiService {
 
   Future<User> createUser({
     required String nickname,
+    required String password, // Dodane pole hasło
     required int age,
     required double height,
     required double weight,
@@ -186,6 +242,7 @@ class ApiService {
       },
       body: jsonEncode({
         'nickname': nickname,
+        'password': password, // Dodane pole
         'age': age,
         'height': height,
         'weight': weight,
@@ -206,6 +263,7 @@ class ApiService {
   Future<User> updateUser({
     required int userId,
     String? nickname,
+    String? password, // Dodane pole hasło
     int? age,
     double? height,
     double? weight,
@@ -219,6 +277,7 @@ class ApiService {
         headers: {"Content-Type": "application/json; charset=utf-8"},
         body: jsonEncode({
           if (nickname != null) "nickname": nickname,
+          if (password != null) "password": password, // Dodane pole hasło
           if (age != null) "age": age,
           if (height != null) "height": height,
           if (weight != null) "weight": weight,

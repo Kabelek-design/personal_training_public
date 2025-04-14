@@ -16,16 +16,19 @@ void main() {
     SharedPreferences.setMockInitialValues({'isFirstLaunch': true});
   });
 
-  testWidgets('Onboarding screen is displayed on first launch', (WidgetTester tester) async {
+  testWidgets('Login selection screen is displayed on first launch', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp(isFirstLaunch: true)); // Przekazujemy wymagany parametr
+    await tester.pumpWidget(const MyApp(initialScreen: LoginSelectionScreen())); // Użyj nowy konstruktor
 
-    // Verify that the onboarding screen is displayed
-    expect(find.text('Witaj w Trening & Dieta'), findsOneWidget); // Sprawdzenie AppBar
-    expect(find.text('Witamy w aplikacji! Wypełnij poniższy formularz, aby rozpocząć.'), findsOneWidget); // Sprawdzenie tekstu powitalnego
-    expect(find.widgetWithText(TextField, 'Nick'), findsOneWidget); // Sprawdzenie pola Nick
-    expect(find.widgetWithText(ElevatedButton, 'Rozpocznij'), findsOneWidget); // Sprawdzenie przycisku
+    // Verify that login selection screen is displayed
+    expect(find.text('Progres Siłowy'), findsOneWidget);
+    expect(find.text('Twój osobisty trener siłowy'), findsOneWidget);
+    expect(find.widgetWithText(ElevatedButton, 'Zaloguj się'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, 'Utwórz konto'), findsOneWidget);
 
-    // Opcjonalnie: Możesz zasymulować wypełnienie formularza i kliknięcie przycisku, ale to bardziej zaawansowane
+    // Opcjonalnie: Możesz zasymulować kliknięcie przycisków
+    // await tester.tap(find.widgetWithText(ElevatedButton, 'Zaloguj się'));
+    // await tester.pumpAndSettle();
+    // expect(find.byType(LoginScreen), findsOneWidget);
   });
 }
