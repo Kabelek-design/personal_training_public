@@ -1,0 +1,2 @@
+C:/Users/thedj/StudioProjects/personal_training_public/frontend/android/app/.cxx/RelWithDebInfo/3n2w4zq4/x86/CMakeFiles/edit_cache.dir
+C:/Users/thedj/StudioProjects/personal_training_public/frontend/android/app/.cxx/RelWithDebInfo/3n2w4zq4/x86/CMakeFiles/rebuild_cache.dir

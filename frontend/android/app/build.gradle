@@ -31,7 +31,7 @@ android {
     signingConfigs {
         release {
             // Podaj właściwą ścieżkę do pliku keystore. Jeśli umieściłeś plik np. w katalogu android/app/, podaj odpowiednią ścieżkę:
-            storeFile file("frontend/android/my-release-key.keystore")
+            storeFile file("../my-release-key.keystore")
             storePassword "william1"    // Hasło, które ustawiłeś przy generowaniu keystore
             keyAlias "my_key_alias"                 // Alias, który wybrałeś przy generowaniu klucza
             keyPassword "william1"         // Hasło do klucza, może być takie samo jak storePassword

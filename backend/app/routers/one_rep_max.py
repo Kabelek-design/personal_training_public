@@ -367,5 +367,5 @@ def compare_training_plans(db: Session = Depends(get_db)):
         "plan_b": plan_b_readable
     }
     
-    router.add_api_route("/compare-plans", compare_plans, methods=["GET"], response_model=dict)
+    # router.add_api_route("/compare-plans", compare_plans, methods=["GET"], response_model=dict)
     
