@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
-from typing import List, Optional  # Dodajemy import Optional
-from typing import Dict, List, Optional
+from typing import List, Optional, Dict
+from datetime import datetime, timedelta
+import bcrypt as raw_bcrypt
 
 from app.schemas.user import User, UserCreate, UserUpdate, WeightHistory as WeightHistorySchema
-from app.schemas.user import PlanVersionChange
+from app.schemas.user import PlanVersionChange, UserLogin, LoginResponse
 from app.models.one_rep_max import Exercise as ExerciseModel, Set as SetModel, WeekPlan as WeekPlanModel
 from app.models.user import User as UserModel
 from app.models.weight_history import WeightHistory as WeightHistoryModel
@@ -49,7 +50,14 @@ def create_user(user: UserCreate, plan_version: Optional[str] = "A", db: Session
     if plan_version not in ["A", "B"]:
         raise HTTPException(status_code=400, detail="Plan version must be 'A' or 'B'")
 
-    db_user = UserModel(**user.dict())
+    # Zahaszuj hasło
+    hashed_password = UserModel.hash_password(user.password)
+    
+    # Utwórz słownik z danymi użytkownika
+    user_data = user.dict(exclude={"password"})
+    user_data["password_hash"] = hashed_password
+    
+    db_user = UserModel(**user_data)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -72,19 +80,65 @@ def create_user(user: UserCreate, plan_version: Optional[str] = "A", db: Session
     db.commit()
     return db_user
 
+@router.post("/login", response_model=LoginResponse)
+def login_user(user_data: UserLogin, db: Session = Depends(get_db)):
+    user = db.query(UserModel).filter(UserModel.nickname == user_data.nickname).first()
+    if not user:
+        print(f"Użytkownik {user_data.nickname} nie znaleziony")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Nieprawidłowa nazwa użytkownika lub hasło",
+        )
+    print(f"[DEBUG] Używana wersja bcrypt: {getattr(raw_bcrypt, '__version__', 'BRAK VERSION')}")
+    print(f"Sprawdzanie hasła dla {user.nickname}")
+    print(f"Hasło podane: {user_data.password}")
+    print(f"Hasło w bazie: {user.password_hash}")
+    print(f"Hasło podane (raw): {repr(user_data.password)}")
+
+    
+    password_match = user.verify_password(user_data.password)
+    print(f"Weryfikacja hasła: {password_match}")
+    
+    if not password_match:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Nieprawidłowa nazwa użytkownika lub hasło",
+        )
+    
+    # Zwróć dane użytkownika
+    return {
+        "id": user.id,
+        "nickname": user.nickname,
+        "token": None,
+    }
+
 @router.patch("/{user_id}", response_model=User)
 def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get_db)):
     user = db.query(UserModel).filter(UserModel.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
     update_data = user_update.dict(exclude_unset=True)
+    
+    # Sprawdź i zaktualizuj nickname, jeśli jest podany
     if "nickname" in update_data and update_data["nickname"] != user.nickname:
         if db.query(UserModel).filter(UserModel.nickname == update_data["nickname"]).first():
             raise HTTPException(status_code=400, detail="Nickname already taken")
+    
+    # Sprawdź i zaktualizuj hasło, jeśli jest podane
+    if "password" in update_data and update_data["password"]:
+        hashed_password = UserModel.hash_password(update_data["password"])
+        update_data["password_hash"] = hashed_password
+        del update_data["password"]  # Usuń niezahaszowane hasło z dicta
+    
+    # Sprawdź gender, jeśli jest podany
     if "gender" in update_data and update_data["gender"] not in ["M", "F"]:
         raise HTTPException(status_code=400, detail="Gender must be 'M' or 'F'")
+    
+    # Aktualizuj pozostałe pola
     for key, value in update_data.items():
         setattr(user, key, value)
+    
     db.commit()
     db.refresh(user)
     return user
@@ -173,4 +227,3 @@ def change_training_plan(user_id: int, plan_data: PlanVersionChange, db: Session
         "user_id": str(user_id),
         "plan_version": plan_version
     }
-    

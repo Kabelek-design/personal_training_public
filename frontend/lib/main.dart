@@ -4,11 +4,15 @@ import 'package:personal_training/screens/training_screen.dart';
 import 'package:personal_training/screens/stats_screen.dart';
 import 'package:personal_training/screens/profile.dart';
 import 'package:personal_training/screens/onboarding_screen.dart';
+import 'package:personal_training/screens/login_screen.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final FlutterLocalNotificationsPlugin notificationsPlugin =
     FlutterLocalNotificationsPlugin();
+
+// Flaga do wymuszenia trybu pierwszego uruchomienia (dla testów)
+// const bool FORCE_FIRST_LAUNCH = true; // Ta linijka jest zakomentowana, aby nie wymuszać ekranu startowego
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,11 +24,29 @@ void main() async {
   await notificationsPlugin.initialize(initSettings);
 
   final prefs = await SharedPreferences.getInstance();
+
+  // Jeśli chcesz na stałe przestać wymuszać tryb pierwszego uruchomienia, usuń (lub zakomentuj) poniższy blok
+  // if (FORCE_FIRST_LAUNCH) {
+  //   await prefs.clear();
+  //   print('Tryb testowy: Wyczyszczono SharedPreferences');
+  // }
+  
   final bool isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
   final int? currentUserId = prefs.getInt('currentUserId');
-  // Usuń lub zakomentuj, jeśli nie jest potrzebne w testach
-  // await prefs.clear();
-  runApp(MyApp(isFirstLaunch: isFirstLaunch, initialUserId: currentUserId));
+  
+  Widget initialScreen;
+  // Usuwamy wymuszenie trybu pierwszego uruchomienia – logika opiera się tylko na wartości isFirstLaunch
+  if (isFirstLaunch || currentUserId == null) {
+    // Jeśli jest pierwsze uruchomienie lub nie ma zalogowanego użytkownika, pokaż ekran logowania/rejestracji
+    initialScreen = const LoginSelectionScreen();
+    print('Uruchamianie ekranu wyboru logowania/rejestracji (pierwsze uruchomienie lub brak zalogowanego użytkownika)');
+  } else {
+    // W przeciwnym razie pokaż ekran główny
+    initialScreen = HomeScreen(currentUserId: currentUserId);
+    print('Uruchamianie z istniejącym użytkownikiem: $currentUserId');
+  }
+  
+  runApp(MyApp(initialScreen: initialScreen));
 }
 
 void showWorkoutReminder() async {
@@ -43,10 +65,9 @@ void showWorkoutReminder() async {
 }
 
 class MyApp extends StatelessWidget {
-  final bool isFirstLaunch;
-  final int? initialUserId;
+  final Widget initialScreen;
 
-  const MyApp({super.key, required this.isFirstLaunch, this.initialUserId});
+  const MyApp({super.key, required this.initialScreen});
 
   @override
   Widget build(BuildContext context) {
@@ -60,9 +81,123 @@ class MyApp extends StatelessWidget {
           bodyMedium: TextStyle(fontFamily: 'Roboto'),
         ),
       ),
-      home: isFirstLaunch || initialUserId == null
-          ? const OnboardingScreen()
-          : HomeScreen(currentUserId: initialUserId),
+      home: initialScreen,
+    );
+  }
+}
+
+// Nowy ekran wyboru między logowaniem a rejestracją
+class LoginSelectionScreen extends StatelessWidget {
+  const LoginSelectionScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.deepPurple.shade400,
+              Colors.deepPurple.shade900,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.fitness_center,
+                    size: 80,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    "Progres Siłowy",
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "Twój osobisty trener siłowy",
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 60),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => const LoginScreen(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.deepPurple,
+                      backgroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 40,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      elevation: 5,
+                    ),
+                    child: const Text(
+                      "Zaloguj się",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  OutlinedButton(
+                    onPressed: () {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => const OnboardingScreen(),
+                        ),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white, width: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 40,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: const Text(
+                      "Utwórz konto",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -96,8 +231,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final prefs = await SharedPreferences.getInstance();
     _currentUserId = prefs.getInt('currentUserId');
     if (_currentUserId == null) {
-      print('Błąd: currentUserId nie znaleziono – przekierowanie na onboarding.');
-      _navigateToOnboarding();
+      print('Błąd: currentUserId nie znaleziono – przekierowanie na ekran logowania.');
+      _navigateToLoginSelection();
       return;
     }
     _initializePages();
@@ -107,16 +242,16 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _pages = [
         TrainingScreen(currentUserId: _currentUserId),
-        TrainingScheduleScreen(currentUserId: _currentUserId!), // Dodane z currentUserId
+        TrainingScheduleScreen(currentUserId: _currentUserId!),
         StatsScreen(currentUserId: _currentUserId),
         ProfileScreen(currentUserId: _currentUserId),
       ];
     });
   }
 
-  void _navigateToOnboarding() {
+  void _navigateToLoginSelection() {
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+      MaterialPageRoute(builder: (context) => const LoginSelectionScreen()),
     );
   }
 
@@ -155,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(Icons.fitness_center, "Ruchy siłowe", 0),
-              _buildNavItem(Icons.calendar_today, "Plan", 1), // Zmieniono ikonę
+              _buildNavItem(Icons.calendar_today, "Plan", 1),
               _buildNavItem(Icons.bar_chart, "Wyniki", 2),
               _buildNavItem(Icons.person, "Profil", 3),
             ],
@@ -170,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: () => _onItemTapped(index),
       child: SizedBox(
-        width: MediaQuery.of(context).size.width / 4, // Zmiana na 4 strony
+        width: MediaQuery.of(context).size.width / 4,
         child: TweenAnimationBuilder(
           duration: const Duration(milliseconds: 300),
           tween: ColorTween(
