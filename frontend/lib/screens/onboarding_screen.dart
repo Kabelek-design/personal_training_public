@@ -15,8 +15,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool isLoading = false;
 
   final nicknameController = TextEditingController();
-  final passwordController = TextEditingController(); // Nowy kontroler dla hasła
-  final passwordConfirmController = TextEditingController(); // Kontroler dla potwierdzenia hasła
+  final passwordController =
+      TextEditingController(); // Nowy kontroler dla hasła
+  final passwordConfirmController =
+      TextEditingController(); // Kontroler dla potwierdzenia hasła
   final ageController = TextEditingController();
   final heightController = TextEditingController();
   final weightController = TextEditingController();
@@ -30,7 +32,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     try {
       final nickname = nicknameController.text.trim();
       final password = passwordController.text; // Pobierz hasło
-      final passwordConfirm = passwordConfirmController.text; // Pobierz potwierdzenie hasła
+      final passwordConfirm =
+          passwordConfirmController.text; // Pobierz potwierdzenie hasła
       final age = int.tryParse(ageController.text) ?? 0;
       final height = double.tryParse(heightController.text) ?? 0.0;
       final weight = double.tryParse(weightController.text) ?? 0.0;
@@ -84,7 +87,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         bool userExists = await apiService.checkUserExists(nickname);
         if (userExists) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ta nazwa użytkownika jest już zajęta')),
+            const SnackBar(
+                content: Text('Ta nazwa użytkownika jest już zajęta')),
           );
           return;
         }
@@ -280,6 +284,56 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               ),
                               style: const TextStyle(color: Colors.black),
                             ),
+                            // --- Hasło ---
+                            const SizedBox(height: 16),
+                            StatefulBuilder(
+                              builder: (context, setSB) {
+                                bool obscure1 = true;
+                                return TextField(
+                                  controller: passwordController,
+                                  obscureText: obscure1,
+                                  decoration: InputDecoration(
+                                    labelText: "Hasło",
+                                    prefixIcon: const Icon(Icons.lock),
+                                    hintText: "Min. 6 znaków",
+                                    suffixIcon: IconButton(
+                                      icon: Icon(obscure1
+                                          ? Icons.visibility
+                                          : Icons.visibility_off),
+                                      onPressed: () =>
+                                          setSB(() => obscure1 = !obscure1),
+                                    ),
+                                  ),
+                                  style: const TextStyle(color: Colors.black),
+                                );
+                              },
+                            ),
+
+// --- Potwierdzenie hasła ---
+                            const SizedBox(height: 16),
+                            StatefulBuilder(
+                              builder: (context, setSB) {
+                                bool obscure2 = true;
+                                return TextField(
+                                  controller: passwordConfirmController,
+                                  obscureText: obscure2,
+                                  decoration: InputDecoration(
+                                    labelText: "Potwierdź hasło",
+                                    prefixIcon: const Icon(Icons.lock_outline),
+                                    hintText: "Wpisz ponownie hasło",
+                                    suffixIcon: IconButton(
+                                      icon: Icon(obscure2
+                                          ? Icons.visibility
+                                          : Icons.visibility_off),
+                                      onPressed: () =>
+                                          setSB(() => obscure2 = !obscure2),
+                                    ),
+                                  ),
+                                  style: const TextStyle(color: Colors.black),
+                                );
+                              },
+                            ),
+
                             const SizedBox(height: 16),
                             TextField(
                               controller: ageController,
@@ -297,7 +351,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 labelText: "Wzrost (cm)",
                                 prefixIcon: Icon(Icons.height),
                               ),
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
                               style: const TextStyle(color: Colors.black),
                             ),
                             const SizedBox(height: 16),
@@ -307,7 +363,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 labelText: "Waga (kg)",
                                 prefixIcon: Icon(Icons.fitness_center),
                               ),
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
                               style: const TextStyle(color: Colors.black),
                             ),
                             const SizedBox(height: 16),
@@ -318,7 +376,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 prefixIcon: Icon(Icons.scale),
                                 hintText: "Podaj docelową wagę",
                               ),
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
                               style: const TextStyle(color: Colors.black),
                             ),
                             const SizedBox(height: 16),
@@ -330,8 +390,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 hintText: "Wybierz M lub F",
                               ),
                               items: const [
-                                DropdownMenuItem(value: "M", child: Text("Mężczyzna")),
-                                DropdownMenuItem(value: "F", child: Text("Kobieta")),
+                                DropdownMenuItem(
+                                    value: "M", child: Text("Mężczyzna")),
+                                DropdownMenuItem(
+                                    value: "F", child: Text("Kobieta")),
                               ],
                               onChanged: (value) {
                                 setState(() {
@@ -389,7 +451,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            color: selectedPlan == "A" ? Colors.deepPurple[100] : null,
+                            color: selectedPlan == "A"
+                                ? Colors.deepPurple[100]
+                                : null,
                             child: InkWell(
                               onTap: () {
                                 setState(() {
@@ -404,7 +468,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
                                           'Plan A',
@@ -428,10 +493,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                     ),
                                     if (isPlanAExpanded)
                                       Padding(
-                                        padding: const EdgeInsets.only(top: 10.0),
+                                        padding:
+                                            const EdgeInsets.only(top: 10.0),
                                         child: Text(
                                           'Schemat 6-4-2, dla zaawansowanych. Skupia się na sile maksymalnej w przysiadach, martwym ciągu i wyciskaniu, z intensywnymi seriami 6, 4 i 2 powtórzeń, w tym AMRAP z 90% obciążenia dla maksymalnej siły.',
-                                          style: TextStyle(fontSize: 14, color: Colors.black),
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black),
                                         ),
                                       ),
                                   ],
@@ -447,7 +515,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            color: selectedPlan == "B" ? Colors.deepPurple[100] : null,
+                            color: selectedPlan == "B"
+                                ? Colors.deepPurple[100]
+                                : null,
                             child: InkWell(
                               onTap: () {
                                 setState(() {
@@ -462,7 +532,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
                                           'Plan B',
@@ -486,10 +557,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                     ),
                                     if (isPlanBExpanded)
                                       Padding(
-                                        padding: const EdgeInsets.only(top: 10.0),
+                                        padding:
+                                            const EdgeInsets.only(top: 10.0),
                                         child: Text(
                                           'Schemat 6-4-6, dla zaawansowanych. Obejmuje większy zakres powtórzeń z mniejszymi, ale odpowiednio ciężkimi obciążeniami w przysiadach, martwym ciągu i wyciskaniu, zapewniając progres siłowy i wytrzymałość.',
-                                          style: TextStyle(fontSize: 14, color: Colors.black),
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black),
                                         ),
                                       ),
                                   ],

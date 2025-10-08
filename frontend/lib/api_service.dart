@@ -225,16 +225,17 @@ Future<LoginResponse> login({
     }
   }
 
-  Future<User> createUser({
-    required String nickname,
-    required String password, // Dodane pole hasło
-    required int age,
-    required double height,
-    required double weight,
-    required String gender,
-    required double weightGoal,
-    required String planVersion,
-  }) async {
+Future<User> createUser({
+  required String nickname,
+  required String password,
+  required int age,
+  required double height,
+  required double weight,
+  required String gender,
+  required double weightGoal,
+  required String planVersion,
+}) async {
+  try {
     final response = await http.post(
       Uri.parse('$baseUrl/$usersEndpoint?plan_version=$planVersion'),
       headers: {
@@ -242,7 +243,7 @@ Future<LoginResponse> login({
       },
       body: jsonEncode({
         'nickname': nickname,
-        'password': password, // Dodane pole
+        'password': password,
         'age': age,
         'height': height,
         'weight': weight,
@@ -250,15 +251,22 @@ Future<LoginResponse> login({
         'plan_version': planVersion,
         'weight_goal': weightGoal,
       }),
-    );
+    ).timeout(const Duration(seconds: 10));
 
-    if (response.statusCode == 200) {
+    print('Status: ${response.statusCode}'); // DODAJ TO
+    print('Body: ${response.body}'); // DODAJ TO
+
+    if (response.statusCode == 200 || response.statusCode == 201) { // DODAJ 201
       return User.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
     } else {
       throw Exception(
-          'Nie udało się utworzyć użytkownika: ${response.statusCode}');
+          'Nie udało się utworzyć użytkownika: ${response.statusCode}, ${response.body}'); // DODAJ response.body
     }
+  } catch (e) {
+    print('Błąd createUser: $e'); // DODAJ TO
+    rethrow;
   }
+}
 
   Future<User> updateUser({
     required int userId,

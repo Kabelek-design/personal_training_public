@@ -12,7 +12,7 @@ final FlutterLocalNotificationsPlugin notificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
 // Flaga do wymuszenia trybu pierwszego uruchomienia (dla testów)
-// const bool FORCE_FIRST_LAUNCH = true; // Ta linijka jest zakomentowana, aby nie wymuszać ekranu startowego
+const bool FORCE_FIRST_LAUNCH = true; // Ta linijka jest zakomentowana, aby nie wymuszać ekranu startowego
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
